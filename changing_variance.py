@@ -2,6 +2,8 @@ import json
 
 
 def change_var(stat: str, val: int) -> None:
+    """Changing the file with the maximum variance of characteristics of the boards"""
+
     with open("max_variance.json", "w") as file:
         data = json.load(file)
     try:

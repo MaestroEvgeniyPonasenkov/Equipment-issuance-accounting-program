@@ -11,11 +11,14 @@ class Board:
         self.pins = pins
 
     def get_alternative(self, board_lst: list) -> str:
+        """Finding an alternative board based on the divergence of the characteristics of the available boards"""
+
         with open("max_variance.json", "r") as file:
             variance = json.load(file)
         points = [0 for _ in board_lst]
         for stat_index, stat in enumerate(list(self.__dict__.items())[1:], 1):
-            stat_now = [list(_.__dict__.values())[stat_index] for _ in board_lst]
+            stat_now = [list(_.__dict__.values())[stat_index]
+                        for _ in board_lst]
             best_var = 0
             for st in stat_now:
                 if st > best_var:
