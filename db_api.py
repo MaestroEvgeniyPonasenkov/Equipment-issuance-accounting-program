@@ -48,19 +48,3 @@ def post_requests(request_body: dict) -> dict:
 load_dotenv()
 api_url = os.getenv("API_URL")
 db_access_token = os.getenv("DB_ACCESS_TOKEN")
-request_body = {
-    "user": 0,
-    "location": 0,
-    "status": "new",
-    "comment": "",
-    "taken_date": "2023-05-13T13:21:30.718Z",
-    "return_date": "2023-05-13T13:21:30.718Z",
-    "issued_by": 0,
-    "hardware": [
-        {
-            "hardware": 0,
-            "count": 0
-        }
-    ]
-}
-print(post_requests(request_body))
