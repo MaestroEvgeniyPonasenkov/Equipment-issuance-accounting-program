@@ -11,8 +11,19 @@ class Board:
         self.pins = pins
 
     def get_alternative(self, board_lst: list) -> str:
-        """Finding an alternative board based on the divergence of the characteristics of the available boards"""
+        """
+        This method takes a list of Board objects as a parameter.
+        It then loads data from a JSON file named 'max_variance.json' which contains maximum variance.
+        The method then compares the characteristics of all available boards with the characteristics of the current Board object.
+        Based on the differences from the values in 'max_variance.json', it calculates a score for each board.
+        Finally, the method returns the name of the board with the highest score.
 
+        Parameters:
+            board_lst (list): A list of Board objects for which we need to find the alternative.
+
+        Returns:
+            str: The name of the board with the highest score.
+        """
         with open("max_variance.json", "r") as file:
             variance = json.load(file)
         points = [0 for _ in board_lst]
