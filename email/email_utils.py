@@ -6,48 +6,41 @@ from email.mime.text import MIMEText
 from validate_email import validate_email
 
 
-def parse_email_message(email_message) -> str:
+def decode_email(message) -> str:
     """
-    This function extracts the plain text from email_message and 
-    returns it as string.
+    Function to decode email message.
 
     Args:
-        email_message: email message to extract text from
+        message (email.message.Message): email message to be decoded.
 
     Returns:
-        str: Parsed text of the email message
+        str: decoded text of the email message
     """
-    message_text = ""
-    if email_message.is_multipart():
-        for part in email_message.get_payload():
-            if part.get_content_type() == "text/plain":
-                message_text = part.get_payload(decode=True).decode('utf-8')
-                break
+    text = ""
+    if message.is_multipart():
+        for part in message.walk():
+            content_type = part.get_content_type()
+            if content_type == "text/plain" or content_type == "text/html":
+                text += part.get_payload(decode=True).decode("utf-8")
     else:
-        message_text = email_message.get_payload(decode=True).decode('utf-8')
-    if isinstance(message_text, bytes):
-        message_text = message_text.decode()
-    return message_text
+        text = message.get_payload(decode=True).decode("utf-8")
+    return text
 
 
 def send_email(subject: str, body: str, recipient: str, email_sender: str, email_username: str, email_password: str) -> None:
     """
-    Send an email message using SMTP and MIMEText libraries.
+    Function to send an email message using SMTP and MIMEText libraries.
 
-    :param subject: Subject of the email message.
-    :type subject: str
-    :param body: Body of the email message.
-    :type body: str
-    :param recipient: Recipient email address.
-    :type recipient: str
-    :param email_sender: Name of the email sender.
-    :type email_sender: str
-    :param email_username: Username of the email sender.
-    :type email_username: str
-    :param email_password: Password of the email sender.
-    :type email_password: str
-    :return: None
-    :rtype: None
+    Args:
+        subject (str): subject of the email message.
+        body (str): body of the email message.
+        recipient (str): recipient email address.
+        email_sender (str): name of the email sender.
+        email_username (str): username of the email sender.
+        email_password (str): password of the email sender.
+
+    Returns:
+        None
     """
     if not validate_email(recipient):
         raise ValueError("This email does not exist")
@@ -89,6 +82,6 @@ def get_mail(email_username: str, email_password: str) -> str:
     _, data = mail.fetch(latest_email_id, "(RFC822)")
     raw_email = data[0][1]
     email_message = email.message_from_bytes(raw_email)
-    result = parse_email_message(email_message)
+    result = decode_email(email_message)
     mail.close()
     return result

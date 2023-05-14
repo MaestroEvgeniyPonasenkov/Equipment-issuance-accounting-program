@@ -13,17 +13,17 @@ def convert_email_to_dict(email_body: str) -> dict:
     dict: Dictionary containing key-value pairs extracted from email HTML.
     """
     soup = BeautifulSoup(email_body, 'html.parser')
-    info_div = soup.find('div')
-    data = {}
-    for div in info_div.find_all('div'):
-        span = div.find('span')
-        if span:
-            text = span.text.strip()
-            parts = text.split(':')
-            if len(parts) == 2:
-                key, value = parts[0].strip(), parts[1].strip()
-                data[key] = value
-    return data
+    pre_tag = soup.find('pre')
+    raw_data = pre_tag.get_text()
+    data = raw_data.strip()
+    kv_string = data[:data.find("\n")]
+    result = kv_string.split(" , ")
+    dictionary = {}
+    for item in result:
+        key, value = item.split(' ', 1)
+        dictionary[key] = value
+    dictionary['Плата'] = dictionary['Плата'].split(', ')
+    return dictionary
 
 
 def convert_email_to_json(data: dict) -> str:

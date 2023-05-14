@@ -3,6 +3,19 @@ from dotenv import load_dotenv
 import os
 
 
+def fetch_location() -> list:
+    """
+    GET request to fetch locations from the API.
+
+    Returns:
+        list: List of locations.
+    """
+    response = requests.get(f"{api_url}/location",
+                            headers={'Authorization': db_access_token})
+    locations = response.json()
+    return locations
+
+
 def fetch_hardware() -> list:
     """
     GET request to fetch free boards from the API.
@@ -29,6 +42,24 @@ def fetch_requests() -> list:
     return equipment_requests
 
 
+def fetch_user(fname: str, lname: str, type: str = "user") -> list:
+    """
+    GET request to fetch user from the API.
+
+    Returns:
+        list: List with user data.
+    """
+    response = requests.get(f"{api_url}/user",
+                            headers={'Authorization': db_access_token},
+                            params={
+                                'first_name': fname,
+                                'last_name': lname,
+                                'type': type
+                            }
+                            )
+    return response.status_code
+
+
 def post_requests(request_body: dict) -> dict:
     """
     POST request to submit a new equipment request to the API.
@@ -39,10 +70,30 @@ def post_requests(request_body: dict) -> dict:
     Returns:
         dict: The response from the API containing details of the newly-created request.
     """
-    response = requests.post(
-        f"{api_url}/request", headers={'Authorization': db_access_token}, json=request_body)
+    response = requests.post(f"{api_url}/request",
+                             headers={'Authorization': db_access_token},
+                             json=request_body
+                             )
     equipment_response = response.json()
     return equipment_response
+
+
+def post_user(request_body: dict) -> dict:
+    """
+    POST request to submit a new user to the API.
+
+    Args:
+        request_body (dict): The request body containing information about the new request.
+
+    Returns:
+        dict: The response from the API containing details of the newly-created request.
+    """
+    response = requests.post(f"{api_url}/user",
+                             headers={'Authorization': db_access_token},
+                             json=request_body
+                             )
+    user_response = response.json()
+    return user_response
 
 
 load_dotenv()
