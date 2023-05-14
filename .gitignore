@@ -1,7 +1,6 @@
 .env
 __pycache__
 test.py
-export_test.py
-email_test.py
 user_requests.xlsx
 user_requests.docx
+scheme.drawio

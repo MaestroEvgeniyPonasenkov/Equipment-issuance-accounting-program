@@ -29,6 +29,19 @@ def fetch_hardware() -> list:
     return hardware
 
 
+def fetch_stock() -> list:
+    """
+    GET request to fetch all boards from the API.
+
+    Returns:
+        list: List of available boards.
+    """
+    response = requests.get(f"{api_url}/stocks",
+                            headers={'Authorization': db_access_token})
+    stock = response.json()
+    return stock
+
+
 def fetch_requests() -> list:
     """
     GET request to fetch all the equipment requests from the API.
@@ -57,7 +70,7 @@ def fetch_user(fname: str, lname: str, type: str = "user") -> list:
                                 'type': type
                             }
                             )
-    return response.status_code
+    return response
 
 
 def post_requests(request_body: dict) -> dict:

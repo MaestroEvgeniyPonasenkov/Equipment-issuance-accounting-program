@@ -77,7 +77,11 @@ def get_mail(email_username: str, email_password: str) -> str:
     mail = imaplib.IMAP4_SSL(smtp_server)
     mail.login(email_username, email_password)
     mail.select("inbox")
-    _, data = mail.search(None, "ALL")
+    subject = "New equipment request"
+    _, data = mail.search(None, f'SUBJECT "{subject}"')
+    email_ids = data[0].split()
+    if not email_ids:
+        raise ValueError("No emails found with the specified subject")
     latest_email_id = data[0].split()[-1]
     _, data = mail.fetch(latest_email_id, "(RFC822)")
     raw_email = data[0][1]

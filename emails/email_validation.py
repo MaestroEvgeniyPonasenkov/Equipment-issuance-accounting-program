@@ -1,22 +1,21 @@
-from email_convertation import convert_email_to_dict
 import os
 from dotenv import load_dotenv
-from email_utils import get_mail
 import sys
 import json
 path = os.getcwd()
 sys.path.append(path)
-from db_api import fetch_user, fetch_hardware, fetch_location, post_user
+from alternative.alternative_board_finder import creating_boards, find_alternative_board
+from db_api import fetch_user, fetch_hardware, fetch_location, fetch_stock, post_user
 
 
-def validate_location():
+def validate_location(request_data: dict) -> bool:
     """
     Validates if the given location exists in the database.
 
     Returns:
         True if the location exists in the database, otherwise raise ValueError
     """
-    location = get_data('Аудитория')
+    location = request_data.get('Аудитория')
     locs = fetch_location()
     chck = any([loc.get('name') == location for loc in locs])
     if chck:
@@ -25,40 +24,52 @@ def validate_location():
         raise ValueError("Аудитория не найдена")
 
 
-def validate_hardware():
+def validate_hardware(request_data: dict):
     """
     Validates if the given hardware exists in the database.
 
     Returns:
         True if the hardware exists in the database, otherwise False
     """
-    hardware = get_data('Плата')
+    hardware_name = request_data.get('Плата')
+    quantity = request_data.get('Количество')
     hardwares = fetch_hardware()
-    chck = any([hws.get('name') == hardware for hws in hardwares])
-    if chck:
-        return True
-    else:
-        #Альтернатива
-        pass
+    stock = fetch_stock()
+    for hw in hardwares:
+        if hw.get('name') == hardware_name:
+            hw_id = hw.get('id')
+            hardware = hw
+    for st in stock:
+        st_id = st.get('hardware')
+        st_count = st.get('count')
+        if st_id == hw_id:
+            if st_count >= quantity:
+                return hardware.get('id'), quantity
+            else:
+                hws = creating_boards(hardwares)
+                try:
+                    alternative_board = find_alternative_board(hardware, hws)
+                    return alternative_board
+                except Exception:
+                    raise TypeError("Ошибка")
 
 
-def validate_user():
+def validate_user(request_data: dict):
     """
     Validates if the user exists in the database. If not, creates a new user using the given input fields.
 
     Returns:
         True if the user exists in the database or has been created successfully, otherwise False
     """
-    firstname = get_data('Имя')
-    lastname = get_data('Фамилия')
-    status_code = fetch_user(firstname, lastname)
-    if status_code == 200:
-        return True
+    firstname = request_data.get('Имя')
+    lastname = request_data.get('Фамилия')
+    response = fetch_user(firstname, lastname)
+    if response.status_code == 200:
+        return response.json()
     else:
-        email = get_data('Почта')
-        phone = get_data('Телефон')
-        create_user(firstname, lastname, email, phone)
-    
+        email = request_data.get('Почта')
+        phone = request_data.get('Телефон')
+        return create_user(firstname, lastname, email, phone)
 
 
 def create_user(fname, lname, email, phone):
@@ -88,25 +99,5 @@ def create_user(fname, lname, email, phone):
         "comment": ""
     }
     request_body = json.dumps(user_data, ensure_ascii=False)
-    post_user(request_body)
-
-
-def get_data(key: str) -> dict:
-    """
-    Gets the value of a given key from the email message body.
-
-    Args:
-        key: Key to search for in the email message body.
-
-    Returns:
-        Value associated with the given key in the email message body.
-    """
-    msg = get_mail(email_username, email_password)
-    msg_parsed = convert_email_to_dict(msg)
-    data = msg_parsed.get(key)
-    return data
-
-
-load_dotenv()
-email_username = os.getenv("EMAIL_USERNAME")
-email_password = os.getenv("EMAIL_PASSWORD")
+    print("User was added to database")
+    return post_user(request_body)

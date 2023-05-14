@@ -1,7 +1,6 @@
 import os
-from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
-from email_utils import send_email
+from . import email_utils
 
 
 def render_template(template_name: str, **kwargs) -> str:
@@ -15,13 +14,13 @@ def render_template(template_name: str, **kwargs) -> str:
     :return: Rendered template output.
     :rtype: str
     """
-    path = f"{os.getcwd()}\\email\\templates"
+    path = f"{os.getcwd()}\\emails\\templates"
     env = Environment(loader=FileSystemLoader(path))
     template = env.get_template(template_name)
     return template.render(**kwargs)
 
 
-def approve_request():
+def approve_request(user_data: dict, email_sender: str, email_username: str, email_password: str):
     """
     Одобрение выдачи прошиваемой платы
 
@@ -43,27 +42,23 @@ def approve_request():
         - your_name (str): Ваше имя
     - approved_body (str): Сгенерированная разметка письма
     """
-    user = ''
     approved_subject = "Одобрение запроса на выдачу программируемой платы"
     approved_template = 'approved_template.html'
     approved_data = {
-        'recipient_name': '',
-        'user_number': '',
-        'location': '',
-        'issue_date': '',
-        'issue_return': '',
-        'issued_by': '',
-        'comment': '',
-        'hardware': ['plata1', 'plata2'],
-        'contact_person': '',
-        'your_name': ''
+        'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
+        'location': user_data.get('Аудитория'),
+        'issue_date': user_data.get('Дата_выдачи'),
+        'issue_return': user_data.get('Дата_возврата'),
+        'hardware': user_data.get('Плата'),
+        'contact_person': 'vzunin@hse.ru',
+        'your_name': 'Имя',
     }
     approved_body = render_template(approved_template, **approved_data)
-    send_email(approved_subject, approved_body, user,
+    email_utils.send_email(approved_subject, approved_body, user_data.get('Почта'),
            email_sender, email_username, email_password)
 
 
-def deny_request():
+def deny_request(user_data: dict, email_sender: str, email_username: str, email_password: str):
     """
     Отказ в запросе на выдачу программируемой платы
 
@@ -78,20 +73,20 @@ def deny_request():
         - your_name (str): Ваше имя
     - denied_body (str): Сгенерированная разметка письма
     """
-    user = ''
     denied_subject = "Отказ в запросе на выдачу программируемой платы"
     denied_template = 'denied_template.html'
     denied_data = {
-        'recipient_name': 'Имя получателя',
-        'contact_person': '',
-        'your_name': ''
+        'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
+        'hardware': user_data.get('Плата'),
+        'contact_person': 'vzunin@hse.ru',
+        'your_name': 'Имя',
     }
     denied_body = render_template(denied_template, **denied_data)
-    send_email(denied_subject, denied_body, user,
+    email_utils.send_email(denied_subject, denied_body, user_data.get('Почта'),
            email_sender, email_username, email_password)
 
     
-def alternative_request():
+def alternative_request(user: str, name: str, email_sender: str, email_username: str, email_password: str, alternative: str):
     """
     Информация об альтернативной плате
 
@@ -108,27 +103,43 @@ def alternative_request():
         - your_name (str): Ваше имя
     - alternative_body (str): Сгенерированная разметка письма
     """
-    user = ''
     alternative_subject = "Информация об альтернативной плате"
     alternative_template = 'alternative_template.html'
     alternative_data = {
-        'recipient_name': 'Имя получателя',
-        'alternatives': [
-            {'name': 'Альтернативная плата 1'},
-            {'name': 'Альтернативная плата 2'}
-        ],
-        'contact_person': '',
-        'your_name': ''
+        'recipient_name': name,
+        'alternatives': alternative,
+        'contact_person': 'vzunin@hse.ru',
+        'your_name': 'Имя'
     }
     alternative_body = render_template(alternative_template, **alternative_data)
-    send_email(alternative_subject, alternative_body, user,
+    email_utils.send_email(alternative_subject, alternative_body, user,
            email_sender, email_username, email_password)
 
+def location_error(user: str, name: str, email_sender: str, email_username: str, email_password: str):
+    """
+    Generate an email to inform the recipient that the location error has occured.
+    
+    Parameters:
 
-load_dotenv()
-email_sender = os.getenv("EMAIL_SENDER")
-email_username = os.getenv("EMAIL_USERNAME")
-email_password = os.getenv("EMAIL_PASSWORD")
-approve_request()
-deny_request()
-alternative_request()
+    user (str): The name of the user
+    locationerror_subject (str): The subject of the email
+    locationerror_template (str): The path to the email template
+    locationerror_data (dict): A dictionary with the following keys:
+    recipient_name (str): The name of the person receiving the email
+    contact_person (str): The name of the contact person
+    your_name (str): Your name or the name of the person writing the email
+    locationerror_body (str): The generated email body
+    
+    Returns: 
+        None
+    """
+    locationerror_subject = "Информация об альтернативной плате"
+    locationerror_template = 'locationerror_template.html'
+    locationerror_data = {
+        'recipient_name': name,
+        'contact_person': 'vzunin@hse.ru',
+        'your_name': 'Имя'
+    }
+    locationerror_body = render_template(locationerror_template, **locationerror_data)
+    email_utils.send_email(locationerror_subject, locationerror_body, user,
+           email_sender, email_username, email_password)
