@@ -78,6 +78,7 @@ def deny_request(user_data: dict, email_sender: str, email_username: str, email_
     denied_data = {
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
         'hardware': user_data.get('Плата'),
+        'quantity': user_data.get('Количество'),
         'contact_person': 'vzunin@hse.ru',
         'your_name': 'Имя',
     }
