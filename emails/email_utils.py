@@ -3,7 +3,6 @@ import imaplib
 import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from validate_email import validate_email
 
 
 def decode_email(message: email.message.Message) -> str:
@@ -42,8 +41,6 @@ def send_email(subject: str, body: str, recipient: str, email_sender: str, email
     Returns:
         None
     """
-    if not validate_email(recipient):
-        raise ValueError("This email does not exist")
     smtp_server = "smtp.yandex.ru"
     message = MIMEMultipart()
     message['From'] = f"{email_sender} <{email_username}>"

@@ -29,10 +29,7 @@ def validate_hardware(request_data: dict):
     hardware_name = request_data.get('Плата')
     quantity = request_data.get('Количество')
     availability = check_availability(hardware_name, quantity)
-    hardwares = availability[0]
-    hardware = availability[1]
-    hardware_id = availability[2]
-    available = availability[3]
+    hardwares, hardware, hardware_id, available = availability
     if available:
         return hardware_id, quantity
     else:

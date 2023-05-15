@@ -41,7 +41,7 @@ class Board:
                 if best_var:
                     points[stat_now.index(
                         best_var)] += variance.get(stat[0])[1]
-            if best_var == 0:
+            if max(points) == 0:
                 raise ValueError(
                     "Альтернативная плата не найдена!")
             return board_lst[points.index(max(points))].name
