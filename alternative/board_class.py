@@ -15,7 +15,8 @@ class Board:
         """
         This method takes a list of Board objects as a parameter.
         It then loads data from a JSON file named 'max_variance.json' which contains maximum variance.
-        The method then compares the characteristics of all available boards with the characteristics of the current Board object.
+        The method then compares the characteristics of all available boards with the characteristics of the current
+        Board object.
         Based on the differences from the values in 'max_variance.json', it calculates a score for each board.
         Finally, the method returns the name of the board with the highest score.
 
@@ -45,6 +46,6 @@ class Board:
                 raise ValueError(
                     "Альтернативная плата не найдена!")
             return board_lst[points.index(max(points))].name
-        except:
+        except Exception:
             raise ValueError(
                 "Альтернативная плата не найдена!")

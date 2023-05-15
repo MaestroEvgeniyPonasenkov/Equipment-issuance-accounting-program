@@ -12,8 +12,8 @@ def validate_location(request_data: dict) -> bool:
     """
     location = request_data.get('Аудитория')
     locs = db_api.fetch_location()
-    chck = any([loc.get('name') == location for loc in locs])
-    if chck:
+    check = any([loc.get('name') == location for loc in locs])
+    if check:
         return True
     else:
         raise ValueError("Аудитория не найдена")
@@ -61,7 +61,7 @@ def validate_user(request_data: dict) -> dict:
     if response.status_code == 200:
         try:
             return response.json()[0]
-        except:
+        except IndexError:
             return {}
     else:
         email = request_data.get('Почта')
@@ -112,12 +112,13 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
         A tuple with 4 values:
             - list: List of all hardwares in the database.
             - dict: Specific hardware being searched for.
-            - int: Id of the specific hardware.
+            - int: id of the specific hardware.
             - bool: Boolean value indicating if the required hardware is available in the required quantity or not.
     """
     hardwares = db_api.fetch_hardware()
     stock = db_api.fetch_stock()
     hw_id = None
+    hardware = None
     for hw in hardwares:
         if hw.get('name') == hardware_name:
             hw_id = hw.get('id')

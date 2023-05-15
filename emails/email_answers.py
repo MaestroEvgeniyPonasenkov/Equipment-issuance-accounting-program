@@ -55,7 +55,7 @@ def approve_request(user_data: dict, email_sender: str, email_username: str, ema
     }
     approved_body = render_template(approved_template, **approved_data)
     email_utils.send_email(approved_subject, approved_body, user_data.get('Почта'),
-           email_sender, email_username, email_password)
+                           email_sender, email_username, email_password)
 
 
 def deny_request(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
@@ -84,10 +84,11 @@ def deny_request(user_data: dict, email_sender: str, email_username: str, email_
     }
     denied_body = render_template(denied_template, **denied_data)
     email_utils.send_email(denied_subject, denied_body, user_data.get('Почта'),
-           email_sender, email_username, email_password)
+                           email_sender, email_username, email_password)
 
-    
-def alternative_request(user_data: dict, email_sender: str, email_username: str, email_password: str, alternative: str) -> None:
+
+def alternative_request(user_data: dict, email_sender: str, email_username: str, email_password: str,
+                        alternative: str) -> None:
     """
     Информация об альтернативной плате
 
@@ -114,11 +115,12 @@ def alternative_request(user_data: dict, email_sender: str, email_username: str,
     }
     alternative_body = render_template(alternative_template, **alternative_data)
     email_utils.send_email(alternative_subject, alternative_body, user_data.get('Почта'),
-           email_sender, email_username, email_password)
+                           email_sender, email_username, email_password)
+
 
 def location_error(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
     """
-    Generate an email to inform the recipient that the location error has occured.
+    Generate an email to inform the recipient that the location error has occurred.
     
     Parameters:
 
@@ -143,4 +145,4 @@ def location_error(user_data: dict, email_sender: str, email_username: str, emai
     }
     locationerror_body = render_template(locationerror_template, **locationerror_data)
     email_utils.send_email(locationerror_subject, locationerror_body, user_data.get('Почта'),
-           email_sender, email_username, email_password)
+                           email_sender, email_username, email_password)

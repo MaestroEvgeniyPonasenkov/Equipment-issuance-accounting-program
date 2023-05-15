@@ -55,7 +55,7 @@ def fetch_requests() -> list[dict]:
     return equipment_requests
 
 
-def fetch_user(fname: str, lname: str, type: str = "user") -> list[dict]:
+def fetch_user(fname: str, lname: str, type: str = "user"):
     """
     GET request to fetch user from the API.
 
@@ -73,7 +73,7 @@ def fetch_user(fname: str, lname: str, type: str = "user") -> list[dict]:
     return response
 
 
-def post_requests(request_body: dict) -> dict:
+def post_requests(request_body: str) -> dict:
     """
     POST request to submit a new equipment request to the API.
 
@@ -91,7 +91,7 @@ def post_requests(request_body: dict) -> dict:
     return equipment_response
 
 
-def post_user(request_body: dict) -> dict:
+def post_user(request_body: str) -> dict:
     """
     POST request to submit a new user to the API.
 

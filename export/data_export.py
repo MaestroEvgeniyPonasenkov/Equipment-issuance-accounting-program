@@ -4,7 +4,7 @@ import openpyxl
 
 def export_to_xlsx(data: list[dict], filename: str) -> None:
     """
-    Saves the given data as an xlsx file.
+    Saves the given data as xlsx file.
 
     Args:
     - data (list): A list of dictionaries representing the data to be exported.

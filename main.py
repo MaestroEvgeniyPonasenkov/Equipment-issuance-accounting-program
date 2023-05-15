@@ -60,7 +60,7 @@ def account_equipment(request_data: dict, email_sender: str, email_username: str
     except ValueError:
         location_error(request_data, email_sender, email_username, email_password)
         return
-            
+
     user = validate_user(request_data)
 
     try:
@@ -69,10 +69,10 @@ def account_equipment(request_data: dict, email_sender: str, email_username: str
             json_data = convert_data_to_json(user, request_data, res)
             post_requests(json_data)
             approve_request(request_data, email_sender, email_username, email_password)
-            return 
+            return
         if isinstance(res, str):
             alternative_request(request_data, email_sender, email_username, email_password, res)
-            return 
+            return
     except TypeError:
         deny_request(request_data, email_sender, email_username, email_password)
         return
@@ -99,11 +99,11 @@ if __name__ == "__main__":
     email_sender = os.getenv("EMAIL_SENDER")
     email_username = os.getenv("EMAIL_USERNAME")
     email_password = os.getenv("EMAIL_PASSWORD")
-    
+
     messages = get_data(email_username, email_password)
-    
+
     for message in messages:
         message_parsed = convert_email_to_dict(message)
         account_equipment(message_parsed, email_sender, email_username, email_password)
-    
+
     export_data("user_requests")

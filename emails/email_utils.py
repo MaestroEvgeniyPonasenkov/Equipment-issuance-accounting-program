@@ -26,7 +26,8 @@ def decode_email(message) -> str:
     return text
 
 
-def send_email(subject: str, body: str, recipient: str, email_sender: str, email_username: str, email_password: str) -> None:
+def send_email(subject: str, body: str, recipient: str, email_sender: str, email_username: str,
+               email_password: str) -> None:
     """
     Function to send an email message using SMTP and MIMEText libraries.
 

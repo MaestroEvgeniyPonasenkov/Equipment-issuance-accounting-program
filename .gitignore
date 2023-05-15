@@ -1,5 +1,6 @@
 .env
 __pycache__
+.idea
 test.py
 user_requests.xlsx
 user_requests.docx
