@@ -1,3 +1,4 @@
+import os
 import json
 
 
@@ -17,12 +18,12 @@ def change_var(stat: str, val: int) -> None:
     Returns:
         None.
     """
-    with open("max_variance.json", "r") as file:
+    with open(f"{os.getcwd()}\\alternative\\max_variance.json", "r") as file:
         data = json.load(file)
     try:
         if isinstance(val, type(data.get(stat)[0])):
             data[stat][0] = val
-            with open('max_variance.json', 'w') as f:
+            with open(f"{os.getcwd()}\\alternative\\max_variance.json", 'w') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         else:
             raise TypeError(

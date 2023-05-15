@@ -3,7 +3,7 @@ import os
 
 
 class Board:
-    def __init__(self, log_elems, memory, pll, multiplier, pins, name):
+    def __init__(self, log_elems: int, memory: int, pll: int, multiplier: int, pins: int, name: str) -> None:
         self.name = name
         self.log_elems = log_elems
         self.memory = memory
@@ -11,7 +11,7 @@ class Board:
         self.multiplier = multiplier
         self.pins = pins
 
-    def get_alternative(self, board_lst: list) -> str:
+    def get_alternative(self, board_lst: list['Board']) -> str:
         """
         This method takes a list of Board objects as a parameter.
         It then loads data from a JSON file named 'max_variance.json' which contains maximum variance.
@@ -39,10 +39,12 @@ class Board:
                         if var <= 0 or var <= variance.get(stat[0])[0]:
                             best_var = st
                 if best_var:
-                    points[stat_now.index(best_var)] += variance.get(stat[0])[1]
+                    points[stat_now.index(
+                        best_var)] += variance.get(stat[0])[1]
             if best_var == 0:
                 raise ValueError(
                     "Альтернативная плата не найдена!")
             return board_lst[points.index(max(points))].name
         except:
-            raise ValueError("Альтернативная плата не найдена!")
+            raise ValueError(
+                "Альтернативная плата не найдена!")

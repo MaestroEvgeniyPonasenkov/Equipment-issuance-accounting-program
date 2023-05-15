@@ -1,1 +1,1 @@
-from .alternative_board_finder import creating_boards, find_alternative_board
+from .alternative_board_finder import find_alternative_board

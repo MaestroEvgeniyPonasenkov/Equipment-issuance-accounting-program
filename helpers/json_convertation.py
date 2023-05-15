@@ -1,7 +1,7 @@
 import json
 
 
-def convert_data_to_json(user, request_data, res):
+def convert_data_to_json(user: dict, request_data: dict, res: tuple[int]) -> str:
     """
     Given a Python object, this function converts it to a JSON format.
 

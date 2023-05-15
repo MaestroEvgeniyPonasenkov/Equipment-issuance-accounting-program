@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 from validate_email import validate_email
 
 
-def decode_email(message) -> str:
+def decode_email(message: email.message.Message) -> str:
     """
     Function to decode email message.
 

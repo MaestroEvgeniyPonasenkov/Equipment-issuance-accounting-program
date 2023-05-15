@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 
-def fetch_location() -> list:
+def fetch_location() -> list[dict]:
     """
     GET request to fetch locations from the API.
 
@@ -16,7 +16,7 @@ def fetch_location() -> list:
     return locations
 
 
-def fetch_hardware() -> list:
+def fetch_hardware() -> list[dict]:
     """
     GET request to fetch free boards from the API.
 
@@ -29,7 +29,7 @@ def fetch_hardware() -> list:
     return hardware
 
 
-def fetch_stock() -> list:
+def fetch_stock() -> list[dict]:
     """
     GET request to fetch all boards from the API.
 
@@ -42,7 +42,7 @@ def fetch_stock() -> list:
     return stock
 
 
-def fetch_requests() -> list:
+def fetch_requests() -> list[dict]:
     """
     GET request to fetch all the equipment requests from the API.
 
@@ -55,7 +55,7 @@ def fetch_requests() -> list:
     return equipment_requests
 
 
-def fetch_user(fname: str, lname: str, type: str = "user") -> list:
+def fetch_user(fname: str, lname: str, type: str = "user") -> list[dict]:
     """
     GET request to fetch user from the API.
 

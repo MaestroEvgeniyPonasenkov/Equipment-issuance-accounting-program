@@ -20,7 +20,7 @@ def render_template(template_name: str, **kwargs) -> str:
     return template.render(**kwargs)
 
 
-def approve_request(user_data: dict, email_sender: str, email_username: str, email_password: str):
+def approve_request(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
     """
     Одобрение выдачи прошиваемой платы
 
@@ -58,7 +58,7 @@ def approve_request(user_data: dict, email_sender: str, email_username: str, ema
            email_sender, email_username, email_password)
 
 
-def deny_request(user_data: dict, email_sender: str, email_username: str, email_password: str):
+def deny_request(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
     """
     Отказ в запросе на выдачу программируемой платы
 
@@ -87,7 +87,7 @@ def deny_request(user_data: dict, email_sender: str, email_username: str, email_
            email_sender, email_username, email_password)
 
     
-def alternative_request(user: str, name: str, email_sender: str, email_username: str, email_password: str, alternative: str):
+def alternative_request(user_data: dict, email_sender: str, email_username: str, email_password: str, alternative: str) -> None:
     """
     Информация об альтернативной плате
 
@@ -107,16 +107,16 @@ def alternative_request(user: str, name: str, email_sender: str, email_username:
     alternative_subject = "Информация об альтернативной плате"
     alternative_template = 'alternative_template.html'
     alternative_data = {
-        'recipient_name': name,
+        'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
         'alternatives': alternative,
         'contact_person': 'vzunin@hse.ru',
         'your_name': 'Имя'
     }
     alternative_body = render_template(alternative_template, **alternative_data)
-    email_utils.send_email(alternative_subject, alternative_body, user,
+    email_utils.send_email(alternative_subject, alternative_body, user_data.get('Почта'),
            email_sender, email_username, email_password)
 
-def location_error(user: str, name: str, email_sender: str, email_username: str, email_password: str):
+def location_error(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
     """
     Generate an email to inform the recipient that the location error has occured.
     
@@ -137,10 +137,10 @@ def location_error(user: str, name: str, email_sender: str, email_username: str,
     locationerror_subject = "Информация об альтернативной плате"
     locationerror_template = 'locationerror_template.html'
     locationerror_data = {
-        'recipient_name': name,
+        'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
         'contact_person': 'vzunin@hse.ru',
         'your_name': 'Имя'
     }
     locationerror_body = render_template(locationerror_template, **locationerror_data)
-    email_utils.send_email(locationerror_subject, locationerror_body, user,
+    email_utils.send_email(locationerror_subject, locationerror_body, user_data.get('Почта'),
            email_sender, email_username, email_password)
