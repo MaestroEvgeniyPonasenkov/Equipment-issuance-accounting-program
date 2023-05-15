@@ -28,17 +28,20 @@ def validate_hardware(request_data: dict):
     """
     hardware_name = request_data.get('Плата')
     quantity = request_data.get('Количество')
-    availability = check_availability(hardware_name, quantity)
+    try:
+        availability = check_availability(hardware_name, quantity)
+    except Exception:
+        raise TypeError("Не найдена плата с таким названием!")
     hardwares, hardware, hardware_id, available = availability
     if available:
         return hardware_id, quantity
     else:
-        alternative_board = find_alternative_board(hardware, hardwares)
-        if alternative_board:
-            alternative_availability = check_availability(alternative_board, quantity)
+        alternative_board_name = find_alternative_board(hardware, hardwares)
+        if alternative_board_name:
+            alternative_availability = check_availability(alternative_board_name, quantity)
             alternative_available = alternative_availability[3]
             if alternative_available:
-                return alternative_board
+                return alternative_board_name
             else:
                 raise TypeError("Не найдено альтернативных плат!")
         else:
@@ -114,10 +117,13 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
     """
     hardwares = db_api.fetch_hardware()
     stock = db_api.fetch_stock()
+    hw_id = None
     for hw in hardwares:
         if hw.get('name') == hardware_name:
             hw_id = hw.get('id')
             hardware = hw
+    if hw_id is None:
+        raise TypeError("Ошибка")
     for st in stock:
         st_id = st.get('hardware')
         st_count = st.get('count')
