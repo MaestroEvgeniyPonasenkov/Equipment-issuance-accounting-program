@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
-def decode_email(message: email.message.Message) -> str:
+def decode_email(message) -> str:
     """
     Function to decode email message.
 
@@ -57,7 +57,7 @@ def send_email(subject: str, body: str, recipient: str, email_sender: str, email
         print("Ошибка при отправке письма:", str(e))
 
 
-def get_mail(email_username: str, email_password: str) -> str:
+def get_mail(email_username: str, email_password: str) -> list[str]:
     """
     This function logs into the email box using given
     email_username and email_password. It then returns the
@@ -68,21 +68,26 @@ def get_mail(email_username: str, email_password: str) -> str:
         email_password: Password for email account
 
     Returns:
-        str: Plain text of the email message
+        str: List of plain texts of the email message
     """
     smtp_server = "imap.yandex.ru"
     mail = imaplib.IMAP4_SSL(smtp_server)
     mail.login(email_username, email_password)
     mail.select("inbox")
     subject = "New equipment request"
-    _, data = mail.search(None, f'SUBJECT "{subject}"')
+    search_criteria = f'(UNSEEN SUBJECT "{subject}")'
+    _, data = mail.search(None, search_criteria)
     email_ids = data[0].split()
     if not email_ids:
-        raise ValueError("No emails found with the specified subject")
-    latest_email_id = data[0].split()[-1]
-    _, data = mail.fetch(latest_email_id, "(RFC822)")
-    raw_email = data[0][1]
-    email_message = email.message_from_bytes(raw_email)
-    result = decode_email(email_message)
-    mail.close()
-    return result
+        raise ValueError(
+            "На данный момент новых запросов нет")
+    messages = []
+    for email_id in email_ids:
+        _, data = mail.fetch(email_id, "(RFC822)")
+        raw_email = data[0][1]
+        email_message = email.message_from_bytes(raw_email)
+        result = decode_email(email_message)
+        messages.append(result)
+        mail.store(email_id, '+FLAGS', '\\Seen')
+    mail.logout()
+    return messages
