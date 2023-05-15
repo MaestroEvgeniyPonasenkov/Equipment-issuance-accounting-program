@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 import sys
 import json
 path = os.getcwd()

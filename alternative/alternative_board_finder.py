@@ -2,6 +2,15 @@ from . import board_class
 
 
 def creating_boards(hardwares: list[dict]) -> list[board_class.Board]:
+    """
+    Creates a list of board_class.Board objects from a list of hardware dictionaries.
+
+    Parameters:
+    hardwares (list[dict]): A list of dictionaries with hardware information.
+
+    Returns:
+    list[board_class.Board]: A list of board_class.Board objects created from the hardware information.
+    """
     lst = []
     for board in hardwares:
         name = board.get('name')
@@ -18,6 +27,19 @@ def creating_boards(hardwares: list[dict]) -> list[board_class.Board]:
 
 
 def find_alternative_board(hardware: dict, hardwares: list[board_class.Board]):
+    """
+    Finds an alternative board from a list of board_class.Board objects based on a given hardware dictionary.
+
+    Parameters:
+    hardware (dict): A dictionary with the hardware information.
+    hardwares (list[board_class.Board]): A list of board_class.Board objects to search for an alternative from.
+
+    Returns:
+    board_class.Board: An alternative board_class.Board object.
+
+    Raises:
+    ValueError: If an alternative board cannot be found.
+    """
     name = hardware.get('name')
     log_elems = hardware.get('log_elems')
     memory = hardware.get('memory')
