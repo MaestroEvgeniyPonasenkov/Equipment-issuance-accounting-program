@@ -13,7 +13,7 @@ def convert_data_to_json(user: dict, request_data: dict, res: tuple[int]) -> str
     """
     user_data = {
         "user": user.get('id'),
-        "location": int(request_data.get('Аудитория')),
+        "location": request_data.get('Аудитория'),
         "status": "new",
         "comment": request_data.get('Комментарий'),
         "taken_date": request_data.get('Дата_выдачи'),

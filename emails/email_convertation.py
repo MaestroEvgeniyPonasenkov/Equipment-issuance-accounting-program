@@ -20,8 +20,9 @@ def convert_email_to_dict(email_body: str) -> dict:
     dictionary = {}
     for item in result:
         key, value = item.split(' ', 1)
-        dictionary[key] = value.strip()
-    dictionary['Почта'] = "@".join(dictionary['Почта'].split())
-    dictionary['Количество'] = int(
-        dictionary['Количество'])
+        dictionary.update({key: value.strip()})
+    dictionary.update(
+        {'Почта': "@".join(dictionary.get('Почта').split())})
+    dictionary.update({'Количество': int(
+        dictionary.get('Количество'))})
     return dictionary

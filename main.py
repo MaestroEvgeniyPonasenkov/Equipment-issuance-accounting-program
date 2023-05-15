@@ -6,6 +6,7 @@
 from dotenv import load_dotenv
 import os
 import sys
+import time
 
 from helpers.data_validation import validate_user, validate_location, validate_hardware
 from helpers.db_api import fetch_requests, post_requests
@@ -56,7 +57,7 @@ def account_equipment(request_data: dict, email_sender: str, email_username: str
     Выход: None
     """
     try:
-        validate_location(request_data)
+        request_data.update({'Аудитория': validate_location(request_data)})
     except ValueError:
         location_error(request_data, email_sender, email_username, email_password)
         return
@@ -100,6 +101,7 @@ if __name__ == "__main__":
     email_username = os.getenv("EMAIL_USERNAME")
     email_password = os.getenv("EMAIL_PASSWORD")
 
+    time.sleep(20)
     messages = get_data(email_username, email_password)
 
     for message in messages:

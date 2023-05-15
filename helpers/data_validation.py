@@ -12,9 +12,14 @@ def validate_location(request_data: dict) -> bool:
     """
     location = request_data.get('Аудитория')
     locs = db_api.fetch_location()
-    check = any([loc.get('name') == location for loc in locs])
+    check = False
+    location_id = None
+    for loc in locs:
+        if location == loc.get('name'):
+            check = True
+            location_id = loc.get('id')
     if check:
-        return True
+        return location_id
     else:
         raise ValueError("Аудитория не найдена")
 
