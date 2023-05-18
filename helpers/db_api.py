@@ -85,7 +85,7 @@ def post_requests(request_body: str) -> dict:
     """
     response = requests.post(f"{api_url}/request",
                              headers={'Authorization': db_access_token},
-                             json=request_body
+                             data=request_body
                              )
     equipment_response = response.json()
     return equipment_response
@@ -103,7 +103,7 @@ def post_user(request_body: str) -> dict:
     """
     response = requests.post(f"{api_url}/user",
                              headers={'Authorization': db_access_token},
-                             json=request_body
+                             data=request_body
                              )
     user_response = response.json()
     return user_response

@@ -35,7 +35,7 @@ def validate_hardware(request_data: dict):
     quantity = request_data.get('Количество')
     try:
         availability = check_availability(hardware_name, quantity)
-    except Exception:
+    except TypeError:
         raise TypeError("Не найдена плата с таким названием!")
     hardwares, hardware, hardware_id, available = availability
     if available:
@@ -129,6 +129,8 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
             hw_id = hw.get('id')
             hardware = hw
     if hw_id is None:
+        raise TypeError("Ошибка")
+    if any([st.get('hardware') == hw_id for st in stock]):
         raise TypeError("Ошибка")
     for st in stock:
         st_id = st.get('hardware')
