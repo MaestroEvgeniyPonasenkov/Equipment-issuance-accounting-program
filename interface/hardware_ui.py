@@ -26,6 +26,7 @@ class Ui_Newhard(object):
         self.type_label = QtWidgets.QLabel(self.splitter_2)
         self.type_label.setObjectName("type_label")
         self.type_line = QtWidgets.QLineEdit(self.splitter_2)
+        self.type_line.setClearButtonEnabled(True)
         self.type_line.setObjectName("type_line")
         self.gridLayout.addWidget(self.splitter_2, 1, 0, 1, 1)
         self.splitter_4 = QtWidgets.QSplitter(Newhard)
@@ -34,6 +35,7 @@ class Ui_Newhard(object):
         self.spec_label = QtWidgets.QLabel(self.splitter_4)
         self.spec_label.setObjectName("spec_label")
         self.spec_line = QtWidgets.QLineEdit(self.splitter_4)
+        self.spec_line.setClearButtonEnabled(True)
         self.spec_line.setObjectName("spec_line")
         self.gridLayout.addWidget(self.splitter_4, 3, 0, 1, 1)
         self.splitter = QtWidgets.QSplitter(Newhard)
@@ -42,6 +44,7 @@ class Ui_Newhard(object):
         self.name_label = QtWidgets.QLabel(self.splitter)
         self.name_label.setObjectName("name_label")
         self.name_line = QtWidgets.QLineEdit(self.splitter)
+        self.name_line.setClearButtonEnabled(True)
         self.name_line.setObjectName("name_line")
         self.gridLayout.addWidget(self.splitter, 0, 0, 1, 1)
         self.splitter_3 = QtWidgets.QSplitter(Newhard)
@@ -50,6 +53,7 @@ class Ui_Newhard(object):
         self.description_label = QtWidgets.QLabel(self.splitter_3)
         self.description_label.setObjectName("description_label")
         self.description_line = QtWidgets.QLineEdit(self.splitter_3)
+        self.description_line.setClearButtonEnabled(True)
         self.description_line.setObjectName("description_line")
         self.gridLayout.addWidget(self.splitter_3, 2, 0, 1, 1)
         self.splitter_5 = QtWidgets.QSplitter(Newhard)
@@ -58,6 +62,7 @@ class Ui_Newhard(object):
         self.count_label = QtWidgets.QLabel(self.splitter_5)
         self.count_label.setObjectName("count_label")
         self.count_line = QtWidgets.QLineEdit(self.splitter_5)
+        self.count_line.setClearButtonEnabled(True)
         self.count_line.setObjectName("count_line")
         self.gridLayout.addWidget(self.splitter_5, 4, 0, 1, 1)
         self.buttonBox = QtWidgets.QDialogButtonBox(Newhard)
@@ -73,7 +78,7 @@ class Ui_Newhard(object):
 
     def retranslateUi(self, Newhard):
         _translate = QtCore.QCoreApplication.translate
-        Newhard.setWindowTitle(_translate("Newhard", "Добавление нвоой платы"))
+        Newhard.setWindowTitle(_translate("Newhard", "Добавление новой платы"))
         self.type_label.setText(_translate("Newhard", "Тип"))
         self.spec_label.setText(_translate("Newhard", "Спецификация"))
         self.name_label.setText(_translate("Newhard", "Название"))

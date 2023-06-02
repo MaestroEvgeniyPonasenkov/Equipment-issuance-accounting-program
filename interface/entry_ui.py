@@ -9,11 +9,9 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QLineEdit
 
 
 class Ui_Enter(object):
-
     def setupUi(self, Enter):
         Enter.setObjectName("Enter")
         Enter.resize(470, 150)
@@ -55,6 +53,7 @@ class Ui_Enter(object):
         self.line_password.setFont(font)
         self.line_password.setStyleSheet("")
         self.line_password.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.line_password.setClearButtonEnabled(True)
         self.line_password.setObjectName("line_password")
         self.verticalLayout.addWidget(self.line_password)
         self.btn_entry = QtWidgets.QPushButton(self.centralwidget)
@@ -81,7 +80,6 @@ class Ui_Enter(object):
 
 if __name__ == "__main__":
     import sys
-
     app = QtWidgets.QApplication(sys.argv)
     Enter = QtWidgets.QMainWindow()
     ui = Ui_Enter()
