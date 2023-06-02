@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 
 import qdarkstyle
@@ -11,10 +12,13 @@ from user_ui import Ui_Newuser
 from hardware_ui import Ui_Newhard
 from alternative_ui import Ui_Alternative
 from request_ui import Ui_NewRequest
+from email_ui import Ui_Email
 from api_requests import patch_request, post_request
 from xlwt import Workbook
 from docx import Document
 import requests
+import re
+import dotenv
 
 CODE = '1'
 DB_ACCESS_TOKEN = "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw=="
@@ -231,10 +235,39 @@ class RequestDialog(QDialog):
         response = post_request('request', data)
         print(response)
 
+def is_valid_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@yandex.ru'
+    return bool(re.match(pattern, email))
+class Email(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.table_window = Ui_MainWindow
+        self.ui = Ui_Email()
+        self.ui.setupUi(self)
+        self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.check)
+        self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
+
+    def check(self):
+        """Проверка почты"""
+        email = self.ui.email_line.text()
+        password = self.ui.passwod_line.text()
+        if (is_valid_email(email)):
+            dotenv.set_key('.env', "EMAIL_USERNAME", email)
+            dotenv.set_key('.env', "EMAIL_PASSWORD", password)
+            print('ok')
+        else:
+            return QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Ошибка в вводе почты",
+                QMessageBox.StandardButton.Ok
+            )
+
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+        self.email_dialog = Ui_Email
         self.status_box = QComboBox()
         self.request_dialog = Ui_NewRequest
         self.alter_dialog = Ui_Alternative
@@ -246,6 +279,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.action_doc.triggered.connect(self.save_doc_file)
         self.ui.action_theme.triggered.connect(self.switch_theme)
         self.ui.action_alternative.triggered.connect(self.set_alternatives)
+        self.ui.action_email.triggered.connect(self.configure_email)
 
         self.ui.users_button.clicked.connect(self.user_table)
         self.ui.hardware_button.clicked.connect(self.hardware_table)
@@ -260,6 +294,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget.itemChanged.connect(self.save_edits)
         self.boxes = {}
 
+    def configure_email(self):
+        self.email_dialog = Email()
+        self.email_dialog.show()
     def add_request(self):
         self.request_dialog = RequestDialog()
         self.hardware_table()
@@ -341,7 +378,7 @@ class MainWindow(QtWidgets.QMainWindow):
             current_status = reqs[row]["status"]
             index = statuses.index(current_status)
             self.status_box.setCurrentIndex(index)
-            self.status_box.currentIndexChanged.connect(lambda _, row=row: self.on_itemChanged(row))
+            self.status_box.currentIndexChanged.connect(lambda _, row=row: self.patch_status(row))
             self.ui.tableWidget.setCellWidget(row, 1, self.status_box)
             self.ui.tableWidget.setItem(row, 2, QTableWidgetItem(reqs[row]["location"]))
             self.ui.tableWidget.setItem(row, 3, QTableWidgetItem(reqs[row]["taken_date"]))
