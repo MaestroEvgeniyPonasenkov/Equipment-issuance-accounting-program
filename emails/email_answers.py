@@ -136,7 +136,7 @@ def location_error(user_data: dict, email_sender: str, email_username: str, emai
     Returns: 
         None
     """
-    locationerror_subject = "Информация об альтернативной плате"
+    locationerror_subject = "Ошибка в запросе на выдачу программируемой платы"
     locationerror_template = 'locationerror_template.html'
     locationerror_data = {
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",

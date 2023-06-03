@@ -101,7 +101,6 @@ if __name__ == "__main__":
     email_username = os.getenv("EMAIL_USERNAME")
     email_password = os.getenv("EMAIL_PASSWORD")
 
-    time.sleep(20)
     messages = get_data(email_username, email_password)
 
     for message in messages:
