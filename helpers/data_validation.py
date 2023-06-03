@@ -94,7 +94,7 @@ def create_user(fname: str, lname: str, email: str, phone: str) -> dict:
         "first_name": fname,
         "last_name": lname,
         "patronymic": "string",
-        "image_link": "string",
+        "image_link": "https://clck.ru/34TfSF",
         "email": email,
         "phone": phone,
         "card_id": "string",

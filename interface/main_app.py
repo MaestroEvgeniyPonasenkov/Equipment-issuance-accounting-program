@@ -1,9 +1,7 @@
 import json
 import os
 import sys
-
-sys.path.insert(0, 'C:/Users/Stepan/PycharmProjects/pythonProject1/Equipment-issuance-accounting-program/')
-
+from datetime import date
 import qdarkstyle
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QListWidgetItem, QDialog, QDialogButtonBox, \
@@ -16,6 +14,8 @@ from alternative_ui import Ui_Alternative
 from request_ui import Ui_NewRequest
 from email_ui import Ui_Email
 
+PATH = os.getcwd()[:-9]
+sys.path.insert(0, PATH)
 import alternative
 import helpers
 from xlwt import Workbook
@@ -27,7 +27,6 @@ import dotenv
 CODE = '1'
 DB_ACCESS_TOKEN = "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw=="
 DB_URL = "https://helow19274.ru/aip/api"
-PATH = os.getcwd()[:-9]
 
 
 class LoginWindow(QtWidgets.QMainWindow):
@@ -214,29 +213,80 @@ class RequestDialog(QDialog):
         last_name = self.ui.last_name_line.text()
         email = self.ui.email_line.text()
         phone = self.ui.phone_line.text()
-        cabinet = self.ui.cab_line.text()
-        board = self.ui.hardware_box.currentText()
-        count = self.ui.count_box.text()
-        issue_date = self.ui.date1_edit.text()
-        return_date = self.ui.date2_edit.text()
-        comment = self.ui.comment_line.text()
-        data = {
-            "user": 1,
-            "location": cabinet,
-            "status": "new",
-            "comment": comment,
-            "taken_date": issue_date,
-            "return_date": return_date,
-            "issued_by": 0,
-            "hardware": [
-                {
-                    "hardware": board,
-                    "count": count
-                }
-            ]
-        }
-        response = helpers.post_request('request', data)
-        print(response)
+        response = helpers.get_request('user')
+        user_id = 0
+        for x in response:
+            if x.get('first_name') == name and x.get('last_name') == last_name:
+                user_id = x.get('id')
+        if user_id == 0:
+            user_data = {
+                "active": True,
+                "type": 'user',
+                "first_name": name,
+                "last_name": last_name,
+                "patronymic": '',
+                "image_link": "https://clck.ru/34TfSF",
+                "email": email,
+                "phone": phone,
+                "card_id": "string",
+                "card_key": "string",
+                "comment": ''
+            }
+
+            user_response = helpers.post_request('user', user_data)
+            if 'detail' in user_response:
+                if 'email' in user_response['detail'][0]['type']:
+                    QMessageBox.warning(
+                        self,
+                        "Ошибка",
+                        "Ошибка в вводе почты",
+                        QMessageBox.StandardButton.Ok
+                    )
+                elif 'phone' in user_response['detail'][0]['type']:
+                    QMessageBox.warning(
+                        self,
+                        "Ошибка",
+                        "Ошибка в вводе телефона",
+                        QMessageBox.StandardButton.Ok
+                    )
+                else:
+                    print("Еще какая-то ошибка")
+                    print(response)
+            else:
+                user_id = user_response['id']
+                print(user_id)
+        if user_id != 0:
+            cabinet = self.ui.cab_box.currentText()
+            board = self.ui.hardware_box.currentText()
+            boards = helpers.get_request('hardware')
+            for x in boards:
+                if x['name'] == board:
+                    hardware = x['id']
+            count = self.ui.count_box.text()
+            dat = self.ui.date1_edit.text().split('.')
+            # issue_date = f'{date[2]}-{date[1]}-{date[0]}'
+            issue_date = date(int(dat[2]), int(dat[1]), int(dat[0])).isoformat()
+            dat = self.ui.date2_edit.text().split('.')
+            return_date = date(int(dat[2]), int(dat[1]), int(dat[0])).isoformat()
+            # return_date = f'{date[2]}-{date[1]}-{date[0]}'
+            comment = self.ui.comment_line.text()
+            data = {
+                "user": user_id,
+                "location": cabinet,
+                "status": "new",
+                "comment": comment,
+                "taken_date": issue_date,
+                "return_date": return_date,
+                "issued_by": 0,
+                "hardware": [
+                    {
+                        "hardware": hardware,
+                        "count": count
+                    }
+                ]
+            }
+            response = helpers.post_request('request', data)
+            print(response)
 
 
 def is_valid_email(email):
@@ -347,10 +397,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def add_request(self):
         self.request_dialog = RequestDialog()
-        self.hardware_table()
-        self.request_dialog.show()
-        boards = [self.ui.hardware_list.item(x).text() for x in range(self.ui.hardware_list.count())]
+        hardware = helpers.get_request('hardware')
+        boards = [x['name'] for x in hardware]
         self.request_dialog.ui.hardware_box.addItems(boards)
+        locations = helpers.get_request('location')
+        locs = [x['name'] for x in locations]
+        self.request_dialog.ui.cab_box.addItems(locs)
+        self.request_dialog.show()
 
     def set_alternatives(self):
         self.alter_dialog = AlternativeDialog()
@@ -441,17 +494,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.tableWidget.item(row, col).setFlags(QtCore.Qt.ItemIsEnabled)
 
     def patch_status(self, tableRow):
-        status = self.boxes[tableRow].currentText()
-        print(status)
-        col_name = 'status'
+        item = self.boxes[tableRow].currentText()
+        print(item)
         update_id = int(self.ui.tableWidget.item(tableRow, 0).text())
         print(update_id)
-        # request_response = patch_request('request', col_name, item, update_id)
-        # if request_response['detail'] == "OK":
-        #     QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
-        # else:
-        #     print(request_response)
-        #     QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка', QMessageBox.Ok)
+        response = requests.patch(f"{DB_URL}/request/{update_id}?status={item}&issued_by=1",
+                                  headers={
+                                      'Authorization': DB_ACCESS_TOKEN,
+                                  }
+                                  ).json()
+        if response['detail'] == "OK":
+            QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
+        else:
+            print(response)
+            QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка', QMessageBox.Ok)
 
     def switch_theme(self):
         if self.styleSheet() != "":
