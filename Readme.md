@@ -27,4 +27,4 @@ The program checks a specific mailbox for new user requests, converts the reques
 2. Run the script - `python main.py`
 3. The program will automatically validate the user requests and email users the result if the request is denied. If approved, the request will be saved to a database and the data will be exported to excel and word documents named "user_requests".
 
-   https://forms.yandex.ru/u/6460beebd0468888856aac7e/
+   https://forms.yandex.ru/cloud/64600b76c769f185157c6e64/

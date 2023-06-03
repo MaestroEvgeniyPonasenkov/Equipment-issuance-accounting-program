@@ -71,10 +71,11 @@ def validate_user(request_data: dict) -> dict:
     else:
         email = request_data.get('Почта')
         phone = request_data.get('Телефон')
-        return create_user(firstname, lastname, email, phone)
+        patronymic = request_data.get('Отчество')
+        return create_user(firstname, lastname, patronymic, email, phone)
 
 
-def create_user(fname: str, lname: str, email: str, phone: str) -> dict:
+def create_user(fname: str, lname: str, patronymic: str, email: str, phone: str) -> dict:
     """
     Creates a new user using given input fields.
 
@@ -92,7 +93,7 @@ def create_user(fname: str, lname: str, email: str, phone: str) -> dict:
         "type": "user",
         "first_name": fname,
         "last_name": lname,
-        "patronymic": "string",
+        "patronymic": patronymic,
         "image_link": "string",
         "email": email,
         "phone": phone,
