@@ -6,7 +6,6 @@
 from dotenv import load_dotenv
 import os
 import sys
-import time
 
 from helpers.data_validation import validate_user, validate_location, validate_hardware
 from helpers.db_api import fetch_requests, post_requests
