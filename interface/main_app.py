@@ -13,7 +13,7 @@ from hardware_ui import Ui_Newhard
 from alternative_ui import Ui_Alternative
 from request_ui import Ui_NewRequest
 from email_ui import Ui_Email
-from api_requests import patch_request, post_request
+from api_requests import patch_request, post_request, get_request
 from xlwt import Workbook
 from docx import Document
 import requests
@@ -69,40 +69,32 @@ class HardDialog(QDialog):
             "image_link": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcStW9UvyhB2beq-tiyJMhzWdP98Rny7PzRaPA&usqp=CAU",
             "specifications": specs
         }
-        hardware_request_body = json.dumps(hardware_data, ensure_ascii=False)
 
-        hardware_response = requests.post(f"{DB_URL}/hardware",
-                                          headers={
-                                              'Authorization': DB_ACCESS_TOKEN,
-                                              'accept': 'application/json',
-                                              'Content-Type': 'application/json'
-                                          },
-                                          data=hardware_request_body
-                                          )
-        hardware_user_response = hardware_response.json()
-        if 'detail' in hardware_user_response:
-            if 'type' in hardware_user_response['detail'][0]['loc']:
+
+        hardware_response = post_request('hardware', hardware_data)
+        if 'detail' in hardware_response:
+            if 'type' in hardware_response['detail'][0]['loc']:
                 QMessageBox.warning(
                     self,
                     "Ошибка",
                     "Ошибка в вводе типа платы",
                     QMessageBox.StandardButton.Ok
                 )
-            elif 'name' in hardware_user_response['detail'][0]['loc']:
+            elif 'name' in hardware_response['detail'][0]['loc']:
                 QMessageBox.warning(
                     self,
                     "Ошибка",
                     "Ошибка в вводе названия",
                     QMessageBox.StandardButton.Ok
                 )
-            elif 'description' in hardware_user_response['detail'][0]['loc']:
+            elif 'description' in hardware_response['detail'][0]['loc']:
                 QMessageBox.warning(
                     self,
                     "Ошибка",
                     "Ошибка в вводе описания. Если оно отсутствует введите -",
                     QMessageBox.StandardButton.Ok
                 )
-            elif 'specifications' in hardware_user_response['detail'][0]['loc']:
+            elif 'specifications' in hardware_response['detail'][0]['loc']:
                 QMessageBox.warning(
                     self,
                     "Ошибка",
@@ -111,7 +103,7 @@ class HardDialog(QDialog):
                 )
             else:
                 print("Еще какая-то ошибка")
-                print(hardware_user_response)
+                print(hardware_response)
         else:
             self.close()
 
@@ -235,9 +227,12 @@ class RequestDialog(QDialog):
         response = post_request('request', data)
         print(response)
 
+
 def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@yandex.ru'
     return bool(re.match(pattern, email))
+
+
 class Email(QDialog):
     def __init__(self):
         super().__init__()
@@ -284,6 +279,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.users_button.clicked.connect(self.user_table)
         self.ui.hardware_button.clicked.connect(self.hardware_table)
         self.ui.request_button.clicked.connect(self.request_table)
+        self.ui.list_button.clicked.connect(self.check_availability)
 
         self.ui.add_user_button.clicked.connect(self.add_user)
         self.ui.add_hardware_button.clicked.connect(self.add_hardware)
@@ -294,9 +290,43 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget.itemChanged.connect(self.save_edits)
         self.boxes = {}
 
+    def check_availability(self):
+        """
+            Проверка наличия платы
+
+            Args:
+                hardware_name: Название платы
+
+            Returns:
+                st_count: Доступное количество плат
+            """
+        hardwares = get_request('hardware')
+        stock = get_request('stocks')
+        print(stock)
+        hardware_name = self.ui.hardware_list.currentItem().text()
+        print(hardware_name)
+        hw_id = None
+        for hw in hardwares:
+            if hw.get('name') == hardware_name:
+                hw_id = hw.get('id')
+        print(hw_id)
+        if hw_id is None:
+            print("Ошибка")
+        count = 0
+        for st in stock:
+            st_id = st['hardware']
+            if st_id == hw_id:
+                is_found = True
+                count += st['count']
+        if count == 0:
+            print("Данных плат нет в наличии")
+        else:
+            print("Доступно", count, "плат")
+
     def configure_email(self):
         self.email_dialog = Email()
         self.email_dialog.show()
+
     def add_request(self):
         self.request_dialog = RequestDialog()
         self.hardware_table()
@@ -364,9 +394,10 @@ class MainWindow(QtWidgets.QMainWindow):
             ["ID", "status", "location", "taken_date", "issued_by", "comment", "created", "user", "return_date",
              "hardware", "stock", "count"])
 
-        reqs = requests.get(f"{DB_URL}/request",
+        reqs = requests.get(f"{DB_URL}/request?joined=True",
                             headers={
-                                'Authorization': DB_ACCESS_TOKEN}).json()
+                                'Authorization': DB_ACCESS_TOKEN}
+                            ).json()
 
         self.ui.tableWidget.setRowCount(len(reqs))
         for row in range(self.ui.tableWidget.rowCount()):
