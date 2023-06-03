@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 
 sys.path.insert(0, 'C:/Users/Stepan/PycharmProjects/pythonProject1/Equipment-issuance-accounting-program/')
@@ -26,6 +27,7 @@ import dotenv
 CODE = '1'
 DB_ACCESS_TOKEN = "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw=="
 DB_URL = "https://helow19274.ru/aip/api"
+PATH = os.getcwd()[:-9]
 
 
 class LoginWindow(QtWidgets.QMainWindow):
@@ -43,6 +45,12 @@ class LoginWindow(QtWidgets.QMainWindow):
         if len(password) > 0:
             if password == CODE:
                 self.close()
+                dotenv.set_key(f'{PATH}.env', "EMAIL_SENDER", "MIEM")
+                dotenv.set_key(f'{PATH}.env', "API_URL", "https://helow19274.ru/aip/api")
+                dotenv.set_key(f'{PATH}.env', 'DB_ACCESS_TOKEN',
+                               "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw==")
+                dotenv.set_key(f'{PATH}.env', "EMAIL_USERNAME", "example_username@yandex.ru")
+                dotenv.set_key(f'{PATH}.env', "EMAIL_PASSWORD", "example_password")
                 self.table_window = MainWindow()
                 self.table_window.show()
             else:
@@ -55,7 +63,7 @@ class HardDialog(QDialog):
         super().__init__()
         self.ui = Ui_Newhard()
         self.ui.setupUi(self)
-        self.setStyleSheet(open('hard_style.qss').read())
+        # self.setStyleSheet(open('hard_style.qss').read())
         self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.check)
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
 
@@ -140,24 +148,25 @@ class UserDialog(QDialog):
             "comment": group
         }
 
-        user_request_body = json.dumps(user_data, ensure_ascii=False)
-
-        response = requests.post(f"{DB_URL}/user",
-                                 headers={'Authorization': DB_ACCESS_TOKEN},
-                                 data=user_request_body
-                                 )
-        user_response = response.json()
-        if 'detail' in user_response:
-            if 'email' in user_response['detail'][0]['type']:
+        response = helpers.post_request('user', user_data)
+        if 'detail' in response:
+            if 'email' in response['detail'][0]['type']:
                 QMessageBox.warning(
                     self,
                     "Ошибка",
                     "Ошибка в вводе почты",
                     QMessageBox.StandardButton.Ok
                 )
+            elif 'phone' in response['detail'][0]['type']:
+                QMessageBox.warning(
+                    self,
+                    "Ошибка",
+                    "Ошибка в вводе телефона",
+                    QMessageBox.StandardButton.Ok
+                )
             else:
                 print("Еще какая-то ошибка")
-                print(user_response)
+                print(response)
         else:
             self.close()
 
@@ -188,7 +197,7 @@ class AlternativeDialog(QDialog):
             "multiplier": [mult_value, mult_index],
             "pins": [pin_value, pin_index]
         }
-        with open('max_variance.json', 'w', encoding='utf-8') as file:
+        with open(f'{PATH}/alternative/max_variance.json', 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
 
@@ -249,8 +258,8 @@ class Email(QDialog):
         email = self.ui.email_line.text()
         password = self.ui.passwod_line.text()
         if (is_valid_email(email)):
-            dotenv.set_key('.env', "EMAIL_USERNAME", email)
-            dotenv.set_key('.env', "EMAIL_PASSWORD", password)
+            dotenv.set_key(f'{PATH}.env', "EMAIL_USERNAME", email)
+            dotenv.set_key(f'{PATH}.env', "EMAIL_PASSWORD", password)
             print('ok')
         else:
             return QMessageBox.warning(
@@ -302,24 +311,20 @@ class MainWindow(QtWidgets.QMainWindow):
         hardware_name = current_item.text()
         hardwares = helpers.get_request('hardware')
         stock = helpers.get_request('stocks')
-        print(stock)
-        print(hardware_name)
         hw_id = None
         current_hardware = {}
         for hw in hardwares:
             if hw.get('name') == hardware_name:
                 hw_id = hw.get('id')
                 current_hardware = hw
-        print(hw_id)
         if hw_id is None:
-            print("Ошибка")
+            return QMessageBox.warning(self, 'Ошибка', 'Такой платы не существует')
         count = 0
         for st in stock:
             st_id = st['hardware']
             if st_id == hw_id:
                 count += st['count']
         if count == 0:
-            print("Данных плат нет в наличии")
             alter = alternative.find_alternative_board(current_hardware, hardwares)
             print(alter)
 
@@ -439,7 +444,7 @@ class MainWindow(QtWidgets.QMainWindow):
         status = self.boxes[tableRow].currentText()
         print(status)
         col_name = 'status'
-        update_id = int(self.ui.tableWidget.item(self.ui.tableWidget.currentRow(), 0).text())
+        update_id = int(self.ui.tableWidget.item(tableRow, 0).text())
         print(update_id)
         # request_response = patch_request('request', col_name, item, update_id)
         # if request_response['detail'] == "OK":

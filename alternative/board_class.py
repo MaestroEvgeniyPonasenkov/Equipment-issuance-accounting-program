@@ -27,7 +27,7 @@ class Board:
             str: The name of the board with the highest score.
         """
         try:
-            with open(f"{os.getcwd()}\\alternative\\max_variance.json", "r") as file:
+            with open(f"{os.getcwd()[:-9]}/alternative/max_variance.json", "r") as file:
                 variance = json.load(file)
             points = [0 for _ in board_lst]
             for stat_index, stat in enumerate(list(self.__dict__.items())[1:], 1):
