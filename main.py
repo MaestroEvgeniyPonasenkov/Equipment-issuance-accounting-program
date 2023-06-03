@@ -8,13 +8,13 @@ import os
 import sys
 import time
 
-from helpers.data_validation import validate_user, validate_location, validate_hardware
-from helpers.db_api import fetch_requests, post_requests
-from helpers.json_convertation import convert_data_to_json
-from emails.email_utils import get_mail
-from emails.email_convertation import convert_email_to_dict
-from emails.email_answers import location_error, approve_request, deny_request, alternative_request
-from export.data_export import export_to_xlsx, export_to_docx
+from helpers import validate_user, validate_location, validate_hardware
+from helpers import fetch_requests, post_requests
+from helpers import convert_data_to_json
+from emails import get_mail
+from emails import convert_email_to_dict
+from emails import location_error, approve_request, deny_request, alternative_request
+from export import export_to_xlsx, export_to_docx
 
 
 def get_data(email_username: str, email_password: str) -> list[str]:

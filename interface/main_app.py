@@ -1,6 +1,7 @@
 import json
-import os
 import sys
+
+sys.path.insert(0, 'C:/Users/Stepan/PycharmProjects/pythonProject1/Equipment-issuance-accounting-program/')
 
 import qdarkstyle
 from PyQt5 import QtWidgets, QtCore
@@ -13,7 +14,9 @@ from hardware_ui import Ui_Newhard
 from alternative_ui import Ui_Alternative
 from request_ui import Ui_NewRequest
 from email_ui import Ui_Email
-from api_requests import patch_request, post_request, get_request
+
+import alternative
+import helpers
 from xlwt import Workbook
 from docx import Document
 import requests
@@ -70,8 +73,7 @@ class HardDialog(QDialog):
             "specifications": specs
         }
 
-
-        hardware_response = post_request('hardware', hardware_data)
+        hardware_response = helpers.post_request('hardware', hardware_data)
         if 'detail' in hardware_response:
             if 'type' in hardware_response['detail'][0]['loc']:
                 QMessageBox.warning(
@@ -224,7 +226,7 @@ class RequestDialog(QDialog):
                 }
             ]
         }
-        response = post_request('request', data)
+        response = helpers.post_request('request', data)
         print(response)
 
 
@@ -292,23 +294,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def check_availability(self):
         """
-            Проверка наличия платы
-
-            Args:
-                hardware_name: Название платы
-
-            Returns:
-                st_count: Доступное количество плат
-            """
-        hardwares = get_request('hardware')
-        stock = get_request('stocks')
+        Проверка наличия платы
+        """
+        current_item = self.ui.hardware_list.currentItem()
+        if current_item is None:
+            return QMessageBox.warning(self, 'Внимание', 'Пожалуйста выберете плату для проверки')
+        hardware_name = current_item.text()
+        hardwares = helpers.get_request('hardware')
+        stock = helpers.get_request('stocks')
         print(stock)
-        hardware_name = self.ui.hardware_list.currentItem().text()
         print(hardware_name)
         hw_id = None
+        current_hardware = {}
         for hw in hardwares:
             if hw.get('name') == hardware_name:
                 hw_id = hw.get('id')
+                current_hardware = hw
         print(hw_id)
         if hw_id is None:
             print("Ошибка")
@@ -316,10 +317,22 @@ class MainWindow(QtWidgets.QMainWindow):
         for st in stock:
             st_id = st['hardware']
             if st_id == hw_id:
-                is_found = True
                 count += st['count']
         if count == 0:
             print("Данных плат нет в наличии")
+            alter = alternative.find_alternative_board(current_hardware, hardwares)
+            print(alter)
+
+            message = QMessageBox()
+            message.setWindowTitle("Наличие платы")
+            if alter != '':
+                message.setText(f'Данной платы нет в наличии, но доступна альтернатива:\n{alter}')
+            else:
+                message.setText(f'Данной платы нет в наличии, а также нет доступных альтернатив')
+            message.setIcon(QMessageBox.Icon.Information)
+            message.setStandardButtons(QMessageBox.Ok)
+            message.exec_()
+
         else:
             print("Доступно", count, "плат")
 
@@ -351,7 +364,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 col_name = user_dict[self.ui.tableWidget.horizontalHeaderItem(current_col).text()]
 
                 update_id = int(self.ui.tableWidget.item(current_row, 0).text())
-                user_response = patch_request('user', col_name, item, update_id)
+                user_response = helpers.patch_request('user', col_name, item, update_id)
                 print(user_response)
                 if user_response['detail'] == "OK":
                     QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
@@ -364,7 +377,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 if (self.ui.tableWidget.horizontalHeaderItem(current_col).text()) in hardware_dict:
                     col_name = hardware_dict[self.ui.tableWidget.horizontalHeaderItem(current_col).text()]
                     update_id = int(self.ui.tableWidget.item(current_row, 0).text())
-                    hardware_response = patch_request('hardware', col_name, item, update_id)
+                    hardware_response = helpers.patch_request('hardware', col_name, item, update_id)
                 else:
                     col_name = 'specifications'
                     data = dict()
@@ -380,7 +393,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                                             QMessageBox.Ok)
 
                     update_id = int(self.ui.tableWidget.item(current_row, 0).text())
-                    hardware_response = patch_request('hardware', col_name, data, update_id)
+                    hardware_response = helpers.patch_request('hardware', col_name, data, update_id)
                 if hardware_response['detail'] == "OK":
                     QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
                 else:
@@ -394,10 +407,7 @@ class MainWindow(QtWidgets.QMainWindow):
             ["ID", "status", "location", "taken_date", "issued_by", "comment", "created", "user", "return_date",
              "hardware", "stock", "count"])
 
-        reqs = requests.get(f"{DB_URL}/request?joined=True",
-                            headers={
-                                'Authorization': DB_ACCESS_TOKEN}
-                            ).json()
+        reqs = helpers.get_request('request?joined=True')
 
         self.ui.tableWidget.setRowCount(len(reqs))
         for row in range(self.ui.tableWidget.rowCount()):
@@ -510,9 +520,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget.setHorizontalHeaderLabels(
             ["ID", "Имя", "Фамилия", "Отчество", "Группа", "Уровень доступа", "Телефон", "Почта"])
 
-        users = requests.get(f"{DB_URL}/user",
-                             headers={
-                                 'Authorization': DB_ACCESS_TOKEN}).json()
+        users = helpers.get_request('user')
 
         self.ui.tableWidget.setRowCount(len(users))
         for row in range(self.ui.tableWidget.rowCount()):
@@ -532,9 +540,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.tableWidget.setHorizontalHeaderLabels(["ID", "Тип", "Название", "Описание", "log_elems",
                                                        "memory", "pll", "multiplier", "pins"
                                                        ])
-        hardware = requests.get(f"{DB_URL}/hardware",
-                                headers={
-                                    'Authorization': DB_ACCESS_TOKEN}).json()
+        hardware = helpers.get_request('hardware')
 
         self.ui.tableWidget.setRowCount(len(hardware))
         self.ui.hardware_list.clear()
@@ -609,7 +615,7 @@ if __name__ == '__main__':
     error = QMessageBox()
     error.setWindowTitle("Ошибка")
     error.setText("Введён неверный пароль")
-    error.setIcon(QMessageBox.Ok)
+    error.setIcon(QMessageBox.Icon.Ok)
     error.setStandardButtons(QMessageBox.Ok)
 
     error.exec_()

@@ -42,6 +42,7 @@ def post_request(table_name: str, data: dict) -> dict:
                              ).json()
     return response
 
+
 def get_request(table_name: str) -> list[dict]:
     response = requests.get(f"{DB_URL}/{table_name}",
                             headers={'Authorization': DB_ACCESS_TOKEN}).json()

@@ -1,6 +1,7 @@
 import json
 from . import db_api
-from alternative.alternative_board_finder import find_alternative_board
+
+
 
 
 def validate_location(request_data: dict) -> bool:
@@ -41,7 +42,7 @@ def validate_hardware(request_data: dict):
     if available:
         return hardware_id, quantity
     else:
-        alternative_board_name = find_alternative_board(hardware, hardwares)
+        alternative_board_name = alternative.find_alternative_board(hardware, hardwares)
         if alternative_board_name:
             alternative_availability = check_availability(alternative_board_name, quantity)
             alternative_available = alternative_availability[3]
@@ -115,7 +116,7 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
 
     Returns:
         A tuple with 4 values:
-            - list: List of all hardwares in the database.
+            - list: List of all hardware in the database.
             - dict: Specific hardware being searched for.
             - int: id of the specific hardware.
             - bool: Boolean value indicating if the required hardware is available in the required quantity or not.
