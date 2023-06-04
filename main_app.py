@@ -6,18 +6,17 @@ import qdarkstyle
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QListWidgetItem, QDialog, QDialogButtonBox, \
     QComboBox
-from entry_ui import Ui_Enter
-from window_ui import Ui_MainWindow
-from user_ui import Ui_Newuser
-from hardware_ui import Ui_Newhard
-from alternative_ui import Ui_Alternative
-from request_ui import Ui_NewRequest
-from email_ui import Ui_Email
+from interface.entry_ui import Ui_Enter
+from interface.window_ui import Ui_MainWindow
+from interface.user_ui import Ui_Newuser
+from interface.hardware_ui import Ui_Newhard
+from interface.alternative_ui import Ui_Alternative
+from interface.request_ui import Ui_NewRequest
+from interface.email_ui import Ui_Email
 
-PATH = os.getcwd()[:-9]
-sys.path.insert(0, PATH)
 import alternative
 import helpers
+from main import start
 from xlwt import Workbook
 from docx import Document
 import requests
@@ -25,6 +24,7 @@ import re
 import dotenv
 
 CODE = '1'
+PATH = os.getcwd()
 DB_ACCESS_TOKEN = "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw=="
 DB_URL = "https://helow19274.ru/aip/api"
 
@@ -44,16 +44,15 @@ class LoginWindow(QtWidgets.QMainWindow):
         if len(password) > 0:
             if password == CODE:
                 self.close()
-                dotenv.set_key(f'{PATH}.env', "EMAIL_SENDER", "MIEM")
-                dotenv.set_key(f'{PATH}.env', "API_URL", "https://helow19274.ru/aip/api")
-                dotenv.set_key(f'{PATH}.env', 'DB_ACCESS_TOKEN',
-                               "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw==")
-                dotenv.set_key(f'{PATH}.env', "EMAIL_USERNAME", "example_username@yandex.ru")
-                dotenv.set_key(f'{PATH}.env', "EMAIL_PASSWORD", "example_password")
                 self.table_window = MainWindow()
+                self.table_window.user_table()
+                hardware = helpers.get_request('hardware')
+                boards = [x['name'] for x in hardware]
+
+                self.table_window.ui.hardware_list.addItems(boards)
                 self.table_window.show()
             else:
-                self.ui.label.setText('Wrong password!')
+                self.ui.label.setText('Неверный пароль! Попробуйте еще раз')
                 self.ui.line_password.clear()
 
 
@@ -308,9 +307,14 @@ class Email(QDialog):
         email = self.ui.email_line.text()
         password = self.ui.passwod_line.text()
         if (is_valid_email(email)):
-            dotenv.set_key(f'{PATH}.env', "EMAIL_USERNAME", email)
-            dotenv.set_key(f'{PATH}.env', "EMAIL_PASSWORD", password)
-            print('ok')
+            print(PATH)
+            dotenv.set_key(f'{PATH}/.env', "EMAIL_SENDER", "MIEM")
+            dotenv.set_key(f'{PATH}/.env', "API_URL", "https://helow19274.ru/aip/api")
+            dotenv.set_key(f'{PATH}/.env', 'DB_ACCESS_TOKEN',
+                           "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw==")
+            dotenv.set_key(f'{PATH}/.env', "EMAIL_USERNAME", email)
+            dotenv.set_key(f'{PATH}/.env', "EMAIL_PASSWORD", password)
+            start()
         else:
             return QMessageBox.warning(
                 self,
@@ -377,11 +381,20 @@ class MainWindow(QtWidgets.QMainWindow):
         if count == 0:
             alter = alternative.find_alternative_board(current_hardware, hardwares)
             print(alter)
+            for hw in hardwares:
+                if hw.get('name') == alter:
+                    hw_id = hw.get('id')
+            count = 0
+            for st in stock:
+                st_id = st['hardware']
+                if st_id == hw_id:
+                    count += st['count']
 
             message = QMessageBox()
             message.setWindowTitle("Наличие платы")
-            if alter != '':
-                message.setText(f'Данной платы нет в наличии, но доступна альтернатива:\n{alter}')
+            if alter != '' and count != 0:
+                message.setText(
+                    f'Данной платы нет в наличии, но доступна альтернатива:\n{alter} в количестве {count} штук')
             else:
                 message.setText(f'Данной платы нет в наличии, а также нет доступных альтернатив')
             message.setIcon(QMessageBox.Icon.Information)
@@ -389,6 +402,12 @@ class MainWindow(QtWidgets.QMainWindow):
             message.exec_()
 
         else:
+            message = QMessageBox()
+            message.setWindowTitle("Наличие платы")
+            message.setText(f'Доступно {count} плат {hardware_name}')
+            message.setIcon(QMessageBox.Icon.Information)
+            message.setStandardButtons(QMessageBox.Ok)
+            message.exec_()
             print("Доступно", count, "плат")
 
     def configure_email(self):
@@ -490,8 +509,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.tableWidget.setItem(row, 9, QTableWidgetItem(str(reqs[row]["hardware"])))
             self.ui.tableWidget.setItem(row, 10, QTableWidgetItem(str(reqs[row]["stock"])))
             self.ui.tableWidget.setItem(row, 11, QTableWidgetItem(str(reqs[row]["count"])))
-            for col in range(2, 12):
-                self.ui.tableWidget.item(row, col).setFlags(QtCore.Qt.ItemIsEnabled)
+            # for col in range(2, 12):
+            #     self.ui.tableWidget.item(row, col).setFlags(QtCore.Qt.ItemIsEnabled)
 
     def patch_status(self, tableRow):
         item = self.boxes[tableRow].currentText()
@@ -521,6 +540,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def add_user(self):
         self.user_dialog = UserDialog()
+        self.user_dialog.ui.surname_line.setText(self.ui.search_line.text())
+        self.ui.search_line.clear()
         self.user_dialog.show()
 
     def search_user(self):
@@ -543,6 +564,8 @@ class MainWindow(QtWidgets.QMainWindow):
             )
             if button == QMessageBox.StandardButton.Yes:
                 self.add_user()
+        else:
+            self.ui.search_line.clear()
 
     def delete(self):
         current_row = self.ui.tableWidget.currentRow()
@@ -557,8 +580,8 @@ class MainWindow(QtWidgets.QMainWindow):
             QMessageBox.StandardButton.No
         )
         if button == QMessageBox.StandardButton.Yes:
+            delete_id = int(self.ui.tableWidget.item(current_row, 0).text())
             if self.ui.tableWidget.columnCount() == 8:
-                delete_id = int(self.ui.tableWidget.item(current_row, 0).text())
                 user_response = requests.delete(f"{DB_URL}/user/{delete_id}",
                                                 headers={
                                                     'Authorization': DB_ACCESS_TOKEN}
@@ -566,20 +589,21 @@ class MainWindow(QtWidgets.QMainWindow):
                 print(user_response)
                 self.ui.tableWidget.removeRow(current_row)
             if self.ui.tableWidget.columnCount() == 9:
-                delete_id = int(self.ui.tableWidget.item(current_row, 0).text())
                 hardware_response = requests.delete(f"{DB_URL}/hardware/{delete_id}",
                                                     headers={
                                                         'Authorization': DB_ACCESS_TOKEN}
-                                                    )
-                hardware_user_response = hardware_response.json()
-                print(hardware_user_response)
+                                                    ).json()
+                if 'detail' in hardware_response:
+                    return QMessageBox.warning(self, 'Ошибка', 'Плату удалить нельзя, так как она находится на складе')
                 self.ui.tableWidget.removeRow(current_row)
+            if self.ui.tableWidget.columnCount() == 12:
+                return QMessageBox.warning(self, 'Ошибка', 'Данная функция пока невозможна')
 
     def user_table(self):
         self.ui.tableWidget.clearContents()
         self.ui.tableWidget.setColumnCount(8)
         self.ui.tableWidget.setHorizontalHeaderLabels(
-            ["ID", "Имя", "Фамилия", "Отчество", "Группа", "Уровень доступа", "Телефон", "Почта"])
+            ["ID", "Имя", "Фамилия", "Отчество", "Уровень доступа", "Телефон", "Почта", "Комментарий"])
 
         users = helpers.get_request('user')
 
@@ -589,10 +613,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.tableWidget.setItem(row, 1, QTableWidgetItem(users[row]["first_name"]))
             self.ui.tableWidget.setItem(row, 2, QTableWidgetItem(users[row]["last_name"]))
             self.ui.tableWidget.setItem(row, 3, QTableWidgetItem(users[row]["patronymic"]))
-            self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(users[row]["comment"]))
-            self.ui.tableWidget.setItem(row, 5, QTableWidgetItem(users[row]["type"]))
-            self.ui.tableWidget.setItem(row, 6, QTableWidgetItem(users[row]["phone"]))
-            self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(users[row]["email"]))
+            self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(users[row]["comment"]))
+            self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(users[row]["type"]))
+            self.ui.tableWidget.setItem(row, 5, QTableWidgetItem(users[row]["phone"]))
+            self.ui.tableWidget.setItem(row, 6, QTableWidgetItem(users[row]["email"]))
             self.ui.tableWidget.setItem(row, 0, QTableWidgetItem(str(users[row]["id"])))
 
     def hardware_table(self):
@@ -635,34 +659,42 @@ class MainWindow(QtWidgets.QMainWindow):
             sheet.write(0, currentColumn, str(self.ui.tableWidget.horizontalHeaderItem(currentColumn).text()))
         for currentColumn in range(self.ui.tableWidget.columnCount()):
             for currentRow in range(self.ui.tableWidget.rowCount()):
-                try:
-                    teext = str(self.ui.tableWidget.item(currentRow, currentColumn).text())
-                    sheet.write(currentRow + 1, currentColumn, teext)
-                except AttributeError:
-                    pass
+                if currentColumn == 1 and self.ui.tableWidget.columnCount() == 12:
+                    try:
+                        teext = self.boxes[currentRow].currentText()
+                        sheet.write(currentRow + 1, currentColumn, teext)
+                    except AttributeError:
+                        pass
+                else:
+                    try:
+                        teext = str(self.ui.tableWidget.item(currentRow, currentColumn).text())
+                        sheet.write(currentRow + 1, currentColumn, teext)
+                    except AttributeError:
+                        pass
 
     def save_doc_file(self):
         """Создание док файла"""
-        # получаем путь к файлу
         filepath, _ = QFileDialog.getSaveFileName(self, 'Save File', '', ".docx(*.docx)")
-        # добавляем таблицу
         doc = Document()
         table = doc.add_table(rows=self.ui.tableWidget.rowCount() + 1, cols=self.ui.tableWidget.columnCount())
-        # применяем стиль для таблицы
         table.style = 'Table Grid'
-        # добавляем заголовки
         for currentColumn in range(self.ui.tableWidget.columnCount()):
             cell = table.cell(0, currentColumn)
             cell.text = str(self.ui.tableWidget.horizontalHeaderItem(currentColumn).text())
-        # заполняем таблицу данными
         for row in range(self.ui.tableWidget.rowCount()):
             for col in range(self.ui.tableWidget.columnCount()):
                 cell = table.cell(row + 1, col)
-                # записываем в ячейку данные
-                try:
-                    cell.text = str(self.ui.tableWidget.item(row, col).text())
-                except AttributeError:
-                    pass
+                if col == 1 and self.ui.tableWidget.columnCount() == 12:
+                    try:
+                        teext = self.boxes[row].currentText()
+                        cell.text = teext
+                    except AttributeError:
+                        pass
+                else:
+                    try:
+                        cell.text = str(self.ui.tableWidget.item(row, col).text())
+                    except AttributeError:
+                        pass
         doc.save(filepath)
 
 
@@ -680,4 +712,14 @@ if __name__ == '__main__':
     error.setStandardButtons(QMessageBox.Ok)
 
     error.exec_()
+    DB_ACCESS_TOKEN = os.getenv("DB_ACCESS_TOKEN")
+    DB_URL = os.getenv("API_URL")
+"""
+"""
+    request_response = requests.delete(f"{DB_URL}/request/{delete_id}",
+                                       headers={
+                                           'Authorization': DB_ACCESS_TOKEN}
+                                       ).json()
+    print(request_response)
+    self.ui.tableWidget.removeRow(current_row)
 """

@@ -6,7 +6,6 @@
 from dotenv import load_dotenv
 import os
 import sys
-import time
 
 from helpers import validate_user, validate_location, validate_hardware
 from helpers import fetch_requests, post_requests
@@ -95,17 +94,14 @@ def export_data(filename: str) -> None:
     export_to_xlsx(data, filename)
 
 
-if __name__ == "__main__":
+def start():
     load_dotenv()
     email_sender = os.getenv("EMAIL_SENDER")
     email_username = os.getenv("EMAIL_USERNAME")
     email_password = os.getenv("EMAIL_PASSWORD")
 
-    time.sleep(20)
     messages = get_data(email_username, email_password)
 
     for message in messages:
         message_parsed = convert_email_to_dict(message)
         account_equipment(message_parsed, email_sender, email_username, email_password)
-
-    export_data("user_requests")
