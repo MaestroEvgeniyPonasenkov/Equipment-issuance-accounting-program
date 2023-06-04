@@ -678,11 +678,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
             specs = hardware[row]["specifications"]
             if specs:
-                self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(str(specs['log_elems'])))
-                self.ui.tableWidget.setItem(row, 5, QTableWidgetItem(str(specs['memory'])))
-                self.ui.tableWidget.setItem(row, 6, QTableWidgetItem(str(specs['pll'])))
-                self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(str(specs['multiplier'])))
-                self.ui.tableWidget.setItem(row, 8, QTableWidgetItem(str(specs['pins'])))
+                self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(str(specs.get('log_elems'))))
+                self.ui.tableWidget.setItem(row, 5, QTableWidgetItem(str(specs.get('memory'))))
+                self.ui.tableWidget.setItem(row, 6, QTableWidgetItem(str(specs.get('pll'))))
+                self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(str(specs.get('multiplier'))))
+                self.ui.tableWidget.setItem(row, 8, QTableWidgetItem(str(specs.get('pins'))))
             self.ui.hardware_list.addItem(QListWidgetItem(hardware[row]["name"]))
 
     def save_excel_file(self):
