@@ -1,8 +1,6 @@
 import json
 from . import db_api
-import alternative
-
-
+from alternative.alternative_board_finder import find_alternative_board
 
 
 def validate_location(request_data: dict) -> bool:
@@ -43,7 +41,7 @@ def validate_hardware(request_data: dict):
     if available:
         return hardware_id, quantity
     else:
-        alternative_board_name = alternative.find_alternative_board(hardware, hardwares)
+        alternative_board_name = find_alternative_board(hardware, hardwares)
         if alternative_board_name:
             alternative_availability = check_availability(alternative_board_name, quantity)
             alternative_available = alternative_availability[3]
@@ -65,18 +63,17 @@ def validate_user(request_data: dict) -> dict:
     firstname = request_data.get('Имя')
     lastname = request_data.get('Фамилия')
     response = db_api.fetch_user(firstname, lastname)
-    if response.status_code == 200:
-        try:
-            return response.json()[0]
-        except IndexError:
-            return {}
-    else:
+    if response.status_code == 200 and not response.json():
         email = request_data.get('Почта')
         phone = request_data.get('Телефон')
-        return create_user(firstname, lastname, email, phone)
+        patronymic = request_data.get('Отчество')
+        return create_user(firstname, lastname, patronymic, email, phone)
+    else:
+        return response.json()[0]
 
 
-def create_user(fname: str, lname: str, email: str, phone: str) -> dict:
+
+def create_user(fname: str, lname: str, patronymic: str, email: str, phone: str) -> dict:
     """
     Creates a new user using given input fields.
 
@@ -94,8 +91,8 @@ def create_user(fname: str, lname: str, email: str, phone: str) -> dict:
         "type": "user",
         "first_name": fname,
         "last_name": lname,
-        "patronymic": "string",
-        "image_link": "https://clck.ru/34TfSF",
+        "patronymic": patronymic,
+        "image_link": "https://cdn4.iconfinder.com/data/icons/student-ui/1173/student_profile-512.png",
         "email": email,
         "phone": phone,
         "card_id": "string",
@@ -117,7 +114,7 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
 
     Returns:
         A tuple with 4 values:
-            - list: List of all hardware in the database.
+            - list: List of all hardwares in the database.
             - dict: Specific hardware being searched for.
             - int: id of the specific hardware.
             - bool: Boolean value indicating if the required hardware is available in the required quantity or not.
@@ -132,7 +129,7 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
             hardware = hw
     if hw_id is None:
         raise TypeError("Ошибка")
-    if any([st.get('hardware') == hw_id for st in stock]):
+    if not(any([st.get('hardware') == hw_id for st in stock])):
         raise TypeError("Ошибка")
     for st in stock:
         st_id = st.get('hardware')

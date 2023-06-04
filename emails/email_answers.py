@@ -46,9 +46,9 @@ def approve_request(user_data: dict, email_sender: str, email_username: str, ema
     approved_template = 'approved_template.html'
     approved_data = {
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
-        'location': user_data.get('Аудитория'),
+        'location': user_data.get('Номер_аудитории'),
         'issue_date': user_data.get('Дата_выдачи'),
-        'issue_return': user_data.get('Дата_возврата'),
+        'return_date': user_data.get('Дата_возврата'),
         'hardware': user_data.get('Плата'),
         'contact_person': 'vzunin@hse.ru',
         'your_name': 'Имя',
@@ -121,7 +121,7 @@ def alternative_request(user_data: dict, email_sender: str, email_username: str,
 def location_error(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
     """
     Generate an email to inform the recipient that the location error has occurred.
-    
+
     Parameters:
 
     user (str): The name of the user
@@ -132,11 +132,11 @@ def location_error(user_data: dict, email_sender: str, email_username: str, emai
     contact_person (str): The name of the contact person
     your_name (str): Your name or the name of the person writing the email
     locationerror_body (str): The generated email body
-    
-    Returns: 
+
+    Returns:
         None
     """
-    locationerror_subject = "Информация об альтернативной плате"
+    locationerror_subject = "Ошибка в запросе на выдачу программируемой платы"
     locationerror_template = 'locationerror_template.html'
     locationerror_data = {
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
