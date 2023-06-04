@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-from datetime import date
+import datetime
 import qdarkstyle
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QListWidgetItem, QDialog, QDialogButtonBox, \
@@ -110,8 +110,7 @@ class HardDialog(QDialog):
                     QMessageBox.StandardButton.Ok
                 )
             else:
-                print("Еще какая-то ошибка")
-                print(hardware_response)
+                return QMessageBox.warning(self, 'Неизвестная ошибка', str(hardware_response))
         else:
             self.close()
 
@@ -198,7 +197,27 @@ class AlternativeDialog(QDialog):
         with open(f'{PATH}/alternative/max_variance.json', 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
+def add_time_to_date(date: str) -> str:
+    """
+    Takes a string representing a date in the format YYYY-MM-DD and returns a string representing
+    the same date and time at which the function is called in ISO format.
 
+    Args:
+    - date: A string representing a date in the format YYYY-MM-DD.
+
+    Returns:
+    - formatted_datetime: A string representing the date and time at which the function is called
+                        in ISO format (YYYY-MM-DDTHH:MM:SS.sssZ).
+    """
+    now = datetime.datetime.now()
+    date_lst = [int(_) for _ in date.split('.')]
+    year = date_lst[2]
+    month = date_lst[1]
+    day = date_lst[0]
+    new_date = datetime.datetime(
+        year, month, day, now.hour, now.minute, now.second, now.microsecond)
+    formatted_datetime = new_date.isoformat()
+    return formatted_datetime
 class RequestDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -249,25 +268,26 @@ class RequestDialog(QDialog):
                         QMessageBox.StandardButton.Ok
                     )
                 else:
-                    print("Еще какая-то ошибка")
-                    print(response)
+                    return QMessageBox.warning(self, 'Неизвестная ошибка', str(response))
             else:
                 user_id = user_response['id']
-                print(user_id)
         if user_id != 0:
             cabinet = self.ui.cab_box.currentText()
+            locations = helpers.get_request('location')
+            for x in locations:
+                if x['name'] == cabinet:
+                    cabinet = x['id']
+
             board = self.ui.hardware_box.currentText()
             boards = helpers.get_request('hardware')
             for x in boards:
                 if x['name'] == board:
                     hardware = x['id']
             count = self.ui.count_box.text()
-            dat = self.ui.date1_edit.text().split('.')
-            # issue_date = f'{date[2]}-{date[1]}-{date[0]}'
-            issue_date = date(int(dat[2]), int(dat[1]), int(dat[0])).isoformat()
-            dat = self.ui.date2_edit.text().split('.')
-            return_date = date(int(dat[2]), int(dat[1]), int(dat[0])).isoformat()
-            # return_date = f'{date[2]}-{date[1]}-{date[0]}'
+            dat = self.ui.date1_edit.text()
+            issue_date = add_time_to_date(dat)
+            dat = self.ui.date2_edit.text()
+            return_date = add_time_to_date(dat)
             comment = self.ui.comment_line.text()
             data = {
                 "user": user_id,
@@ -276,7 +296,7 @@ class RequestDialog(QDialog):
                 "comment": comment,
                 "taken_date": issue_date,
                 "return_date": return_date,
-                "issued_by": 0,
+                "issued_by": user_id,
                 "hardware": [
                     {
                         "hardware": hardware,
@@ -428,19 +448,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.alter_dialog = AlternativeDialog()
         self.alter_dialog.show()
 
-    # Нужно изменить
     def save_edits(self):
         if self.ui.tableWidget.currentItem() is not None:
             item = self.ui.tableWidget.currentItem().text()
             current_row = self.ui.tableWidget.currentRow()
             current_col = self.ui.tableWidget.currentColumn()
+            update_id = int(self.ui.tableWidget.item(current_row, 0).text())
             if self.ui.tableWidget.columnCount() == 8:
                 user_dict = {"Имя": 'first_name', "Фамилия": 'last_name', "Отчество": 'patronymic',
                              "Группа": 'comment', "Уровень доступа": 'type', "Телефон": 'phone', "Почта": 'email'}
 
                 col_name = user_dict[self.ui.tableWidget.horizontalHeaderItem(current_col).text()]
-
-                update_id = int(self.ui.tableWidget.item(current_row, 0).text())
                 user_response = helpers.patch_request('user', col_name, item, update_id)
                 print(user_response)
                 if user_response['detail'] == "OK":
@@ -453,7 +471,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if (self.ui.tableWidget.horizontalHeaderItem(current_col).text()) in hardware_dict:
                     col_name = hardware_dict[self.ui.tableWidget.horizontalHeaderItem(current_col).text()]
-                    update_id = int(self.ui.tableWidget.item(current_row, 0).text())
                     hardware_response = helpers.patch_request('hardware', col_name, item, update_id)
                 else:
                     col_name = 'specifications'
@@ -469,13 +486,31 @@ class MainWindow(QtWidgets.QMainWindow):
                                                             'При изменения данных произошла ошибка.\nДопустим ввод только чисел.',
                                                             QMessageBox.Ok)
 
-                    update_id = int(self.ui.tableWidget.item(current_row, 0).text())
                     hardware_response = helpers.patch_request('hardware', col_name, data, update_id)
                 if hardware_response['detail'] == "OK":
                     QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
                 else:
                     QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка', QMessageBox.Ok)
                     self.hardware_table()
+            elif self.ui.tableWidget.columnCount() == 12:
+                reqs = helpers.get_request('request')
+                current_header = self.ui.tableWidget.horizontalHeaderItem(current_col).text()
+                for x in reqs:
+                    if x['id'] == update_id:
+                        dat = x
+                dat[current_header] = item
+                data_json = json.dumps(dat, ensure_ascii=False)
+                response = requests.patch(f"{DB_URL}/request/{update_id}",
+                                          headers={
+                                              'Authorization': DB_ACCESS_TOKEN,
+                                          },
+                                          data=data_json
+                                          ).json()
+                if response['detail'] == "OK":
+                    QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
+                else:
+                    QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка}', QMessageBox.Ok)
+
 
     def request_table(self):
         self.ui.tableWidget.clearContents()
@@ -503,6 +538,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(reqs[row]["issued_by"]))
             self.ui.tableWidget.setItem(row, 5, QTableWidgetItem(reqs[row]["comment"]))
             self.ui.tableWidget.setItem(row, 6, QTableWidgetItem(reqs[row]["created"]))
+            self.ui.tableWidget.item(row, 6).setFlags(QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(reqs[row]["user"]))
             self.ui.tableWidget.setItem(row, 8, QTableWidgetItem(reqs[row]["return_date"]))
             self.ui.tableWidget.setItem(row, 0, QTableWidgetItem(str(reqs[row]["id"])))
@@ -514,19 +550,23 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def patch_status(self, tableRow):
         item = self.boxes[tableRow].currentText()
-        print(item)
         update_id = int(self.ui.tableWidget.item(tableRow, 0).text())
-        print(update_id)
-        response = requests.patch(f"{DB_URL}/request/{update_id}?status={item}&issued_by=1",
+        reqs = helpers.get_request('request')
+        for x in reqs:
+            if x['id'] == update_id:
+                dat = x
+        dat['status'] = item
+        data_json = json.dumps(dat, ensure_ascii=False)
+        response = requests.patch(f"{DB_URL}/request/{update_id}",
                                   headers={
                                       'Authorization': DB_ACCESS_TOKEN,
-                                  }
+                                  },
+                                  data = data_json
                                   ).json()
         if response['detail'] == "OK":
             QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
         else:
-            print(response)
-            QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка', QMessageBox.Ok)
+            QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка}', QMessageBox.Ok)
 
     def switch_theme(self):
         if self.styleSheet() != "":
