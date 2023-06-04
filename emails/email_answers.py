@@ -46,9 +46,9 @@ def approve_request(user_data: dict, email_sender: str, email_username: str, ema
     approved_template = 'approved_template.html'
     approved_data = {
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
-        'location': user_data.get('Аудитория'),
+        'location': user_data.get('Номер_аудитории'),
         'issue_date': user_data.get('Дата_выдачи'),
-        'issue_return': user_data.get('Дата_возврата'),
+        'return_date': user_data.get('Дата_возврата'),
         'hardware': user_data.get('Плата'),
         'contact_person': 'vzunin@hse.ru',
         'your_name': 'Имя',

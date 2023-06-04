@@ -56,6 +56,7 @@ def account_equipment(request_data: dict, email_sender: str, email_username: str
     Выход: None
     """
     try:
+        request_data.update({'Номер_аудитории': request_data.get('Аудитория')})
         request_data.update({'Аудитория': validate_location(request_data)})
     except ValueError:
         location_error(request_data, email_sender, email_username, email_password)

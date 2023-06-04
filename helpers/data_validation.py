@@ -63,16 +63,14 @@ def validate_user(request_data: dict) -> dict:
     firstname = request_data.get('Имя')
     lastname = request_data.get('Фамилия')
     response = db_api.fetch_user(firstname, lastname)
-    if response.status_code == 200:
-        try:
-            return response.json()[0]
-        except IndexError:
-            return {}
-    else:
+    if response.status_code == 200 and not response.json():
         email = request_data.get('Почта')
         phone = request_data.get('Телефон')
         patronymic = request_data.get('Отчество')
         return create_user(firstname, lastname, patronymic, email, phone)
+    else:
+        return response.json()[0]
+
 
 
 def create_user(fname: str, lname: str, patronymic: str, email: str, phone: str) -> dict:
@@ -94,7 +92,7 @@ def create_user(fname: str, lname: str, patronymic: str, email: str, phone: str)
         "first_name": fname,
         "last_name": lname,
         "patronymic": patronymic,
-        "image_link": "string",
+        "image_link": "https://cdn4.iconfinder.com/data/icons/student-ui/1173/student_profile-512.png",
         "email": email,
         "phone": phone,
         "card_id": "string",
@@ -131,7 +129,7 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
             hardware = hw
     if hw_id is None:
         raise TypeError("Ошибка")
-    if any([st.get('hardware') == hw_id for st in stock]):
+    if not(any([st.get('hardware') == hw_id for st in stock])):
         raise TypeError("Ошибка")
     for st in stock:
         st_id = st.get('hardware')
