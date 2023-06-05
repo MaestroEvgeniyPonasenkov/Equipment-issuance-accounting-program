@@ -133,7 +133,7 @@ def check_availability(hardware_name: str, quantity: int) -> tuple:
         raise TypeError("Ошибка")
     for st in stock:
         st_id = st.get('hardware')
-        st_count = st.get('count')
+        st_count = st.get('available_total')
         if st_id == hw_id:
             if st_count >= quantity:
                 return hardwares, hardware, hw_id, True
