@@ -51,7 +51,7 @@ def approve_request(user_data: dict, email_sender: str, email_username: str, ema
         'return_date': user_data.get('Дата_возврата'),
         'hardware': user_data.get('Плата'),
         'contact_person': 'vzunin@hse.ru',
-        'your_name': 'Имя',
+        'your_name': 'МИЭМ',
     }
     approved_body = render_template(approved_template, **approved_data)
     email_utils.send_email(approved_subject, approved_body, user_data.get('Почта'),
@@ -80,7 +80,7 @@ def deny_request(user_data: dict, email_sender: str, email_username: str, email_
         'hardware': user_data.get('Плата'),
         'quantity': user_data.get('Количество'),
         'contact_person': 'vzunin@hse.ru',
-        'your_name': 'Имя',
+        'your_name': 'МИЭМ',
     }
     denied_body = render_template(denied_template, **denied_data)
     email_utils.send_email(denied_subject, denied_body, user_data.get('Почта'),
@@ -111,7 +111,7 @@ def alternative_request(user_data: dict, email_sender: str, email_username: str,
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
         'alternatives': alternative,
         'contact_person': 'vzunin@hse.ru',
-        'your_name': 'Имя'
+        'your_name': 'МИЭМ'
     }
     alternative_body = render_template(alternative_template, **alternative_data)
     email_utils.send_email(alternative_subject, alternative_body, user_data.get('Почта'),
@@ -141,7 +141,7 @@ def location_error(user_data: dict, email_sender: str, email_username: str, emai
     locationerror_data = {
         'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
         'contact_person': 'vzunin@hse.ru',
-        'your_name': 'Имя'
+        'your_name': 'МИЭМ'
     }
     locationerror_body = render_template(locationerror_template, **locationerror_data)
     email_utils.send_email(locationerror_subject, locationerror_body, user_data.get('Почта'),
