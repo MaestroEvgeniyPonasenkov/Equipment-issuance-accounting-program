@@ -108,3 +108,5 @@ if __name__ == "__main__":
         account_equipment(message_parsed, email_sender, email_username, email_password)
 
     export_data("user_requests")
+    
+    print(f"Было обработано {len(messages)} запроса(-ов)")
