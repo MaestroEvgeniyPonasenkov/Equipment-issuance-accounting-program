@@ -87,8 +87,9 @@ def start():
 
     messages = get_data(email_username, email_password)
     if not messages:
-        return print("На данный момент новых запросов нет")
+        return "На данный момент новых запросов нет"
 
     for message in messages:
         message_parsed = convert_email_to_dict(message)
         account_equipment(message_parsed, email_sender, email_username, email_password)
+    return f"Было обработано {len(messages)} запросов"

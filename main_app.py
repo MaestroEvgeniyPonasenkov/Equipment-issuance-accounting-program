@@ -8,7 +8,7 @@ import re
 import dotenv
 import alternative
 import helpers
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QListWidgetItem, QDialog, QDialogButtonBox, \
     QComboBox
 from interface.entry_ui import Ui_Enter
@@ -67,6 +67,7 @@ def set_keys(email: str, password: str) -> None:
 class LoginWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/entry_icon.png'))
         self.table_window = Ui_MainWindow
         self.ui = Ui_Enter()
         self.ui.setupUi(self)
@@ -120,6 +121,7 @@ class LoginWindow(QtWidgets.QMainWindow):
 class HardDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/hardware_icon.jpg'))
         self.ui = Ui_Newhard()
         self.ui.setupUi(self)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -226,6 +228,7 @@ class HardDialog(QDialog):
 class UserDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/user_icon.png'))
         self.ui = Ui_Newuser()
         self.ui.setupUi(self)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -280,6 +283,7 @@ class UserDialog(QDialog):
 class AlternativeDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/alter_icon.png'))
         self.ui = Ui_Alternative()
         self.ui.setupUi(self)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -311,6 +315,7 @@ class AlternativeDialog(QDialog):
 class RequestDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/request_icon.png'))
         self.ui = Ui_NewRequest()
         self.ui.setupUi(self)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -407,6 +412,7 @@ def is_valid_email(email):
 class Email(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/email_icon.png'))
         self.table_window = Ui_MainWindow
         self.ui = Ui_Email()
         self.ui.setupUi(self)
@@ -432,6 +438,7 @@ class Email(QDialog):
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QtGui.QIcon('interface/icons/main_icon.jpg'))
         self.email_dialog = Ui_Email
         self.status_box = QComboBox()
         self.request_dialog = Ui_NewRequest
@@ -449,7 +456,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.users_button.clicked.connect(self.user_table)
         self.ui.hardware_button.clicked.connect(self.hardware_table)
         self.ui.request_button.clicked.connect(self.request_table)
-        self.ui.check_email_button.clicked.connect(start)
+        self.ui.check_email_button.clicked.connect(self.accounting)
         self.ui.list_button.clicked.connect(self.check_availability)
 
         self.ui.add_user_button.clicked.connect(self.add_user)
@@ -460,6 +467,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.del_button.clicked.connect(self.delete)
         self.ui.tableWidget.itemChanged.connect(self.save_edits)
         self.boxes = {}
+
+    def accounting(self):
+        message = start()
+        return QMessageBox.warning(
+            self,
+            "Ошибка",
+            message,
+            QMessageBox.StandardButton.Ok
+        )
 
     def check_availability(self):
         """
