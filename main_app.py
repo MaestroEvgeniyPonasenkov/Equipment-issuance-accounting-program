@@ -3,6 +3,11 @@ import os
 import sys
 import datetime
 import qdarkstyle
+import requests
+import re
+import dotenv
+import alternative
+import helpers
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QTableWidgetItem, QListWidgetItem, QDialog, QDialogButtonBox, \
     QComboBox
@@ -13,20 +18,50 @@ from interface.hardware_ui import Ui_Newhard
 from interface.alternative_ui import Ui_Alternative
 from interface.request_ui import Ui_NewRequest
 from interface.email_ui import Ui_Email
-
-import alternative
-import helpers
 from main import start
 from xlwt import Workbook
 from docx import Document
-import requests
-import re
-import dotenv
 
-CODE = '1'
 PATH = os.getcwd()
 DB_ACCESS_TOKEN = "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw=="
 DB_URL = "https://helow19274.ru/aip/api"
+
+
+def format_date(date: str) -> str:
+    """
+    Takes a string representing a date in the format YYYY-MM-DD and returns a string representing
+    the same date and time at which the function is called in ISO format.
+
+    Args:
+    - date: A string representing a date in the format YYYY-MM-DD.
+
+    Returns:
+    - formatted_datetime: A string representing the date and time at which the function is called
+                        in ISO format (YYYY-MM-DDTHH:MM:SS.sssZ).
+    """
+    now = datetime.datetime.now()
+    date_lst = [int(_) for _ in date.split('.')]
+    year = date_lst[2]
+    month = date_lst[1]
+    day = date_lst[0]
+    new_date = datetime.datetime(
+        year, month, day, now.hour, now.minute, now.second, now.microsecond)
+    formatted_datetime = new_date.isoformat()
+    return formatted_datetime
+
+
+def set_keys(email: str, password: str) -> None:
+    """
+    Запись '.env' файла
+    :param email: Логин почты
+    :param password: Пароль почты
+    """
+    dotenv.set_key(f'{PATH}/.env', "EMAIL_SENDER", "MIEM")
+    dotenv.set_key(f'{PATH}/.env', "API_URL", "https://helow19274.ru/aip/api")
+    dotenv.set_key(f'{PATH}/.env', 'DB_ACCESS_TOKEN',
+                   "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw==")
+    dotenv.set_key(f'{PATH}/.env', "EMAIL_USERNAME", email)
+    dotenv.set_key(f'{PATH}/.env', "EMAIL_PASSWORD", password)
 
 
 class LoginWindow(QtWidgets.QMainWindow):
@@ -35,25 +70,51 @@ class LoginWindow(QtWidgets.QMainWindow):
         self.table_window = Ui_MainWindow
         self.ui = Ui_Enter()
         self.ui.setupUi(self)
-        self.ui.btn_entry.clicked.connect(self.on_click)
-        self.ui.line_password.returnPressed.connect(self.on_click)
+        self.ui.btn_entry.clicked.connect(self.check)
+        self.ui.password_line.returnPressed.connect(self.check)
+        self.email_username = os.getenv("EMAIL_USERNAME")
+        self.ui.entry_last_button.setToolTip(self.email_username)
+        self.ui.entry_last_button.clicked.connect(self.previous_session)
 
-    def on_click(self):
-        """Проверка пароля"""
-        password = self.ui.line_password.text()
-        if len(password) > 0:
-            if password == CODE:
-                self.close()
-                self.table_window = MainWindow()
-                self.table_window.user_table()
-                hardware = helpers.get_request('hardware')
-                boards = [x['name'] for x in hardware]
+    def previous_session(self):
+        if self.email_username:
+            self.close()
+            self.table_window = MainWindow()
+            self.table_window.user_table()
+            hardware = helpers.get_request('hardware')
+            boards = [x['name'] for x in hardware]
 
-                self.table_window.ui.hardware_list.addItems(boards)
-                self.table_window.show()
-            else:
-                self.ui.label.setText('Неверный пароль! Попробуйте еще раз')
-                self.ui.line_password.clear()
+            self.table_window.ui.hardware_list.addItems(boards)
+            self.table_window.show()
+        else:
+            return QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Прошлой сессии не существует",
+                QMessageBox.StandardButton.Ok
+            )
+
+    def check(self):
+        """Проверка почты"""
+        email = self.ui.email_line.text()
+        password = self.ui.password_line.text()
+        if is_valid_email(email):
+            set_keys(email, password)
+            self.close()
+            self.table_window = MainWindow()
+            self.table_window.user_table()
+            hardware = helpers.get_request('hardware')
+            boards = [x['name'] for x in hardware]
+
+            self.table_window.ui.hardware_list.addItems(boards)
+            self.table_window.show()
+        else:
+            return QMessageBox.warning(
+                self,
+                "Ошибка",
+                "Ошибка в вводе почты",
+                QMessageBox.StandardButton.Ok
+            )
 
 
 class HardDialog(QDialog):
@@ -61,16 +122,63 @@ class HardDialog(QDialog):
         super().__init__()
         self.ui = Ui_Newhard()
         self.ui.setupUi(self)
-        # self.setStyleSheet(open('hard_style.qss').read())
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
         self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.check)
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
+        self.ui.spec_radio.pressed.connect(self.add_spec)
+
+    def add_spec(self):
+        if self.ui.pin_label.isHidden():
+            self.ui.gridLayout.addWidget(self.ui.pin_label, 7, 0, 1, 1)
+            self.ui.pin_label.show()
+            self.ui.gridLayout.addWidget(self.ui.pin_line, 8, 0, 1, 2)
+            self.ui.pin_line.show()
+            self.ui.gridLayout.addWidget(self.ui.log_label, 9, 0, 1, 1)
+            self.ui.log_label.show()
+            self.ui.gridLayout.addWidget(self.ui.log_line, 10, 0, 1, 2)
+            self.ui.log_line.show()
+            self.ui.gridLayout.addWidget(self.ui.mult_label, 11, 0, 1, 1)
+            self.ui.mult_label.show()
+            self.ui.gridLayout.addWidget(self.ui.mult_line, 12, 0, 1, 2)
+            self.ui.mult_line.show()
+            self.ui.gridLayout.addWidget(self.ui.pll_label, 13, 0, 1, 1)
+            self.ui.pll_label.show()
+            self.ui.gridLayout.addWidget(self.ui.pll_line, 14, 0, 1, 2)
+            self.ui.pll_line.show()
+            self.ui.gridLayout.addWidget(self.ui.memory_label, 15, 0, 1, 1)
+            self.ui.memory_label.show()
+            self.ui.gridLayout.addWidget(self.ui.memory_line, 16, 0, 1, 2)
+            self.ui.memory_line.show()
+            box = self.ui.buttonBox
+            self.ui.gridLayout.removeWidget(self.ui.buttonBox)
+            self.ui.gridLayout.addWidget(box, 17, 1, 1, 1)
+        else:
+            self.ui.memory_line.hide()
+            self.ui.memory_label.hide()
+            self.ui.pll_line.hide()
+            self.ui.pll_label.hide()
+            self.ui.mult_line.hide()
+            self.ui.mult_label.hide()
+            self.ui.pin_label.hide()
+            self.ui.pin_line.hide()
+            self.ui.log_label.hide()
+            self.ui.log_line.hide()
+            self.adjustSize()
 
     def check(self):
+        if self.ui.spec_radio.isChecked():
+            specs = {
+                "log_elems": self.ui.log_line.text(),
+                'memory': self.ui.memory_line.text(),
+                'pll': self.ui.pll_line.text(),
+                'multiplier': self.ui.mult_line.text(),
+                'pins': self.ui.pin_line.text()
+            }
+        else:
+            specs = {}
         name = self.ui.name_line.text()
-        specs = self.ui.spec_line.text()
-        count = self.ui.count_line.text()
         description = self.ui.description_line.text()
-        typ = self.ui.type_line.text()
+        typ = self.ui.type_line.currentText()
         hardware_data = {
             "name": name,
             "type": typ,
@@ -120,6 +228,7 @@ class UserDialog(QDialog):
         super().__init__()
         self.ui = Ui_Newuser()
         self.ui.setupUi(self)
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
         self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.check)
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
 
@@ -173,6 +282,7 @@ class AlternativeDialog(QDialog):
         super().__init__()
         self.ui = Ui_Alternative()
         self.ui.setupUi(self)
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
         self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.make_json)
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
 
@@ -197,32 +307,13 @@ class AlternativeDialog(QDialog):
         with open(f'{PATH}/alternative/max_variance.json', 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=4, ensure_ascii=False)
 
-def add_time_to_date(date: str) -> str:
-    """
-    Takes a string representing a date in the format YYYY-MM-DD and returns a string representing
-    the same date and time at which the function is called in ISO format.
 
-    Args:
-    - date: A string representing a date in the format YYYY-MM-DD.
-
-    Returns:
-    - formatted_datetime: A string representing the date and time at which the function is called
-                        in ISO format (YYYY-MM-DDTHH:MM:SS.sssZ).
-    """
-    now = datetime.datetime.now()
-    date_lst = [int(_) for _ in date.split('.')]
-    year = date_lst[2]
-    month = date_lst[1]
-    day = date_lst[0]
-    new_date = datetime.datetime(
-        year, month, day, now.hour, now.minute, now.second, now.microsecond)
-    formatted_datetime = new_date.isoformat()
-    return formatted_datetime
 class RequestDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.ui = Ui_NewRequest()
         self.ui.setupUi(self)
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
         self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.check)
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
 
@@ -285,9 +376,9 @@ class RequestDialog(QDialog):
                     hardware = x['id']
             count = self.ui.count_box.text()
             dat = self.ui.date1_edit.text()
-            issue_date = add_time_to_date(dat)
+            issue_date = format_date(dat)
             dat = self.ui.date2_edit.text()
-            return_date = add_time_to_date(dat)
+            return_date = format_date(dat)
             comment = self.ui.comment_line.text()
             data = {
                 "user": user_id,
@@ -319,22 +410,16 @@ class Email(QDialog):
         self.table_window = Ui_MainWindow
         self.ui = Ui_Email()
         self.ui.setupUi(self)
-        self.ui.buttonBox.button(QDialogButtonBox.Ok).clicked.connect(self.check)
+        self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
+        self.ui.buttonBox.button(QDialogButtonBox.Save).clicked.connect(self.check)
         self.ui.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.close)
 
     def check(self):
         """Проверка почты"""
         email = self.ui.email_line.text()
-        password = self.ui.passwod_line.text()
-        if (is_valid_email(email)):
-            print(PATH)
-            dotenv.set_key(f'{PATH}/.env', "EMAIL_SENDER", "MIEM")
-            dotenv.set_key(f'{PATH}/.env', "API_URL", "https://helow19274.ru/aip/api")
-            dotenv.set_key(f'{PATH}/.env', 'DB_ACCESS_TOKEN',
-                           "Basic NVJOWUJkTGR1VER4UUNjTThZWXJiNW5BOkg0ZFNjQXlHYlM4OUtnTGdaQnMydlBzaw==")
-            dotenv.set_key(f'{PATH}/.env', "EMAIL_USERNAME", email)
-            dotenv.set_key(f'{PATH}/.env', "EMAIL_PASSWORD", password)
-            start()
+        password = self.ui.password_line.text()
+        if is_valid_email(email):
+            set_keys(email, password)
         else:
             return QMessageBox.warning(
                 self,
@@ -364,6 +449,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.users_button.clicked.connect(self.user_table)
         self.ui.hardware_button.clicked.connect(self.hardware_table)
         self.ui.request_button.clicked.connect(self.request_table)
+        self.ui.check_email_button.clicked.connect(start)
         self.ui.list_button.clicked.connect(self.check_availability)
 
         self.ui.add_user_button.clicked.connect(self.add_user)
@@ -400,7 +486,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 count += st['count']
         if count == 0:
             alter = alternative.find_alternative_board(current_hardware, hardwares)
-            print(alter)
             for hw in hardwares:
                 if hw.get('name') == alter:
                     hw_id = hw.get('id')
@@ -428,7 +513,6 @@ class MainWindow(QtWidgets.QMainWindow):
             message.setIcon(QMessageBox.Icon.Information)
             message.setStandardButtons(QMessageBox.Ok)
             message.exec_()
-            print("Доступно", count, "плат")
 
     def configure_email(self):
         self.email_dialog = Email()
@@ -460,7 +544,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 col_name = user_dict[self.ui.tableWidget.horizontalHeaderItem(current_col).text()]
                 user_response = helpers.patch_request('user', col_name, item, update_id)
-                print(user_response)
                 if user_response['detail'] == "OK":
                     QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
                 else:
@@ -510,7 +593,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
                 else:
                     QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка}', QMessageBox.Ok)
-
+                    self.request_table()
 
     def request_table(self):
         self.ui.tableWidget.clearContents()
@@ -533,20 +616,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.status_box.setCurrentIndex(index)
             self.status_box.currentIndexChanged.connect(lambda _, row=row: self.patch_status(row))
             self.ui.tableWidget.setCellWidget(row, 1, self.status_box)
-            self.ui.tableWidget.setItem(row, 2, QTableWidgetItem(reqs[row]["location"]))
+            self.ui.tableWidget.setItem(row, 2, QTableWidgetItem(str(reqs[row]["location"])))
             self.ui.tableWidget.setItem(row, 3, QTableWidgetItem(reqs[row]["taken_date"]))
-            self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(reqs[row]["issued_by"]))
+            self.ui.tableWidget.setItem(row, 4, QTableWidgetItem(str(reqs[row]["issued_by"])))
             self.ui.tableWidget.setItem(row, 5, QTableWidgetItem(reqs[row]["comment"]))
             self.ui.tableWidget.setItem(row, 6, QTableWidgetItem(reqs[row]["created"]))
             self.ui.tableWidget.item(row, 6).setFlags(QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(reqs[row]["user"]))
+            self.ui.tableWidget.setItem(row, 7, QTableWidgetItem(str(reqs[row]["user"])))
             self.ui.tableWidget.setItem(row, 8, QTableWidgetItem(reqs[row]["return_date"]))
             self.ui.tableWidget.setItem(row, 0, QTableWidgetItem(str(reqs[row]["id"])))
             self.ui.tableWidget.setItem(row, 9, QTableWidgetItem(str(reqs[row]["hardware"])))
             self.ui.tableWidget.setItem(row, 10, QTableWidgetItem(str(reqs[row]["stock"])))
             self.ui.tableWidget.setItem(row, 11, QTableWidgetItem(str(reqs[row]["count"])))
-            # for col in range(2, 12):
-            #     self.ui.tableWidget.item(row, col).setFlags(QtCore.Qt.ItemIsEnabled)
 
     def patch_status(self, tableRow):
         item = self.boxes[tableRow].currentText()
@@ -561,12 +642,13 @@ class MainWindow(QtWidgets.QMainWindow):
                                   headers={
                                       'Authorization': DB_ACCESS_TOKEN,
                                   },
-                                  data = data_json
+                                  data=data_json
                                   ).json()
         if response['detail'] == "OK":
             QMessageBox.information(self, 'Успех', 'Данные были успешно изменены')
         else:
             QMessageBox.critical(self, 'Ошибка', 'При изменения данных произошла ошибка}', QMessageBox.Ok)
+            self.request_table()
 
     def switch_theme(self):
         if self.styleSheet() != "":
