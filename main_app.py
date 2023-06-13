@@ -88,7 +88,7 @@ class LoginWindow(QtWidgets.QMainWindow):
             self.table_window.ui.hardware_list.addItems(boards)
             self.table_window.show()
         else:
-            return QMessageBox.warning(
+            QMessageBox.warning(
                 self,
                 "Ошибка",
                 "Прошлой сессии не существует",
@@ -110,7 +110,7 @@ class LoginWindow(QtWidgets.QMainWindow):
             self.table_window.ui.hardware_list.addItems(boards)
             self.table_window.show()
         else:
-            return QMessageBox.warning(
+            QMessageBox.warning(
                 self,
                 "Ошибка",
                 "Ошибка в вводе почты",
@@ -121,7 +121,7 @@ class LoginWindow(QtWidgets.QMainWindow):
 class HardDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QtGui.QIcon('interface/icons/hardware_icon.jpg'))
+        self.setWindowIcon(QtGui.QIcon('interface/icons/hardware_icon.png'))
         self.ui = Ui_Newhard()
         self.ui.setupUi(self)
         self.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -447,6 +447,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.user_dialog = Ui_Newuser
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.ui.tableWidget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         self.ui.action_excel.triggered.connect(self.save_excel_file)
         self.ui.action_doc.triggered.connect(self.save_doc_file)
         self.ui.action_theme.triggered.connect(self.switch_theme)
@@ -472,7 +474,7 @@ class MainWindow(QtWidgets.QMainWindow):
         message = start()
         return QMessageBox.warning(
             self,
-            "Ошибка",
+            "Результат проверки почты",
             message,
             QMessageBox.StandardButton.Ok
         )
@@ -517,7 +519,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 message.setText(
                     f'Данной платы нет в наличии, но доступна альтернатива:\n{alter} в количестве {count} штук')
             else:
-                message.setText(f'Данной платы нет в наличии, а также нет доступных альтернатив')
+                message.setText('Данной платы нет в наличии, а также нет доступных альтернатив')
             message.setIcon(QMessageBox.Icon.Information)
             message.setStandardButtons(QMessageBox.Ok)
             message.exec_()
@@ -724,7 +726,9 @@ class MainWindow(QtWidgets.QMainWindow):
                                                 headers={
                                                     'Authorization': DB_ACCESS_TOKEN}
                                                 ).json()
-                print(user_response)
+                if 'detail' in user_response:
+                    return QMessageBox.warning(self, 'Ошибка',
+                                               'Пользователя нельзя удалить, так как у него есть запросы')
                 self.ui.tableWidget.removeRow(current_row)
             if self.ui.tableWidget.columnCount() == 9:
                 hardware_response = requests.delete(f"{DB_URL}/hardware/{delete_id}",
