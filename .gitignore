@@ -1,7 +1,12 @@
 .env
 __pycache__
+main_app.spec
+main-app.spec
+dist
+build
 .idea
 test.py
 user_requests.xlsx
 user_requests.docx
+hardware.docx
 scheme.drawio
