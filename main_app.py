@@ -412,7 +412,7 @@ def is_valid_email(email):
 class Email(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QtGui.QIcon('interface/icons/email_icon.png'))
+        self.setWindowIcon(QtGui.QIcon('interface/icons/Logo_Email.jpg'))
         self.table_window = Ui_MainWindow
         self.ui = Ui_Email()
         self.ui.setupUi(self)

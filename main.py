@@ -80,7 +80,8 @@ def account_equipment(request_data: dict, email_sender: str, email_username: str
 
 
 def start():
-    load_dotenv()
+    path = os.getcwd()
+    load_dotenv(f'{path}/.env')
     email_sender = os.getenv("EMAIL_SENDER")
     email_username = os.getenv("EMAIL_USERNAME")
     email_password = os.getenv("EMAIL_PASSWORD")
