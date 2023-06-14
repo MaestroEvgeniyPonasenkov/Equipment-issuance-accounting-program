@@ -1,5 +1,6 @@
 import json
 import os
+import smtplib
 import sys
 import datetime
 import qdarkstyle
@@ -64,6 +65,17 @@ def set_keys(email: str, password: str) -> None:
     dotenv.set_key(f'{PATH}/.env', "EMAIL_PASSWORD", password)
 
 
+def check_email_credentials(email_username: str, email_password: str) -> bool:
+    smtp_server = "smtp.yandex.ru"
+    try:
+        mail = smtplib.SMTP_SSL(smtp_server)
+        mail.login(email_username, email_password)
+        mail.quit()
+        return True
+    except smtplib.SMTPAuthenticationError:
+        return False
+
+
 class LoginWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -79,6 +91,10 @@ class LoginWindow(QtWidgets.QMainWindow):
 
     def previous_session(self):
         if self.email_username:
+            dotenv.load_dotenv(f'{PATH}/.env')
+            email_username = os.getenv("EMAIL_USERNAME")
+            email_password = os.getenv("EMAIL_PASSWORD")
+            check_email_credentials(email_username, email_password)
             self.close()
             self.table_window = MainWindow()
             self.table_window.user_table()
@@ -99,7 +115,7 @@ class LoginWindow(QtWidgets.QMainWindow):
         """Проверка почты"""
         email = self.ui.email_line.text()
         password = self.ui.password_line.text()
-        if is_valid_email(email):
+        if check_email_credentials(email, password):
             set_keys(email, password)
             self.close()
             self.table_window = MainWindow()
@@ -113,7 +129,7 @@ class LoginWindow(QtWidgets.QMainWindow):
             QMessageBox.warning(
                 self,
                 "Ошибка",
-                "Ошибка в вводе почты",
+                "Неверная почта или пароль",
                 QMessageBox.StandardButton.Ok
             )
 
@@ -404,11 +420,6 @@ class RequestDialog(QDialog):
             print(response)
 
 
-def is_valid_email(email):
-    pattern = r'^[a-zA-Z0-9._%+-]+@yandex.ru'
-    return bool(re.match(pattern, email))
-
-
 class Email(QDialog):
     def __init__(self):
         super().__init__()
@@ -424,13 +435,13 @@ class Email(QDialog):
         """Проверка почты"""
         email = self.ui.email_line.text()
         password = self.ui.password_line.text()
-        if is_valid_email(email):
+        if check_email_credentials(email, password):
             set_keys(email, password)
         else:
-            return QMessageBox.warning(
+            QMessageBox.warning(
                 self,
                 "Ошибка",
-                "Ошибка в вводе почты",
+                "Неверная почта или пароль",
                 QMessageBox.StandardButton.Ok
             )
 
