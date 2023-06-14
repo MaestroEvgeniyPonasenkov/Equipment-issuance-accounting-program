@@ -5,7 +5,6 @@ import sys
 import datetime
 import qdarkstyle
 import requests
-import re
 import dotenv
 import alternative
 import helpers
