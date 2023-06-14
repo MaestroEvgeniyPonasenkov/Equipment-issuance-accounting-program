@@ -73,7 +73,7 @@ def fetch_user(fname: str, lname: str, type: str = "user"):
     return response
 
 
-def post_requests(request_body: str) -> None:
+def post_requests(request_body: str) -> bool:
     """
     POST request to submit a new equipment request to the API.
 
@@ -81,7 +81,7 @@ def post_requests(request_body: str) -> None:
         request_body (str): The request body in JSON format containing information about the new request.
 
     Returns:
-        None
+        (bool): shows us was request successful or not
     """
     response = requests.post(f"{api_url}/request",
                              headers={'Authorization': db_access_token},
@@ -90,8 +90,10 @@ def post_requests(request_body: str) -> None:
     equipment_response = response.json()
     if response.status_code == 201:
         print(f"Request was successfully added to database!\ndetails:{equipment_response}")
+        return True
     else:
         print(f"Request failed!\ndetails:{equipment_response}")
+        return False
 
 
 def post_user(request_body: str) -> dict:

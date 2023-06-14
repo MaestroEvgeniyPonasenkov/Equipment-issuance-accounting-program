@@ -146,3 +146,33 @@ def location_error(user_data: dict, email_sender: str, email_username: str, emai
     locationerror_body = render_template(locationerror_template, **locationerror_data)
     email_utils.send_email(locationerror_subject, locationerror_body, user_data.get('Почта'),
                            email_sender, email_username, email_password)
+
+
+def db_error(user_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
+    """
+    Generate an email to inform the recipient that the database error has occurred.
+
+    Parameters:
+
+    user (str): The name of the user
+    dberror_subject (str): The subject of the email
+    dberror_template (str): The path to the email template
+    dberror_data (dict): A dictionary with the following keys:
+    recipient_name (str): The name of the person receiving the email
+    contact_person (str): The name of the contact person
+    your_name (str): Your name or the name of the person writing the email
+    dberror_body (str): The generated email body
+
+    Returns:
+        None
+    """
+    dberror_subject = "Ошибка при работе с базой данных"
+    dberror_template = 'dberror_template.html'
+    dberror_data = {
+        'recipient_name': f"{user_data.get('Имя')} {user_data.get('Фамилия')}",
+        'contact_person': 'vzunin@hse.ru',
+        'your_name': 'МИЭМ'
+    }
+    dberror_body = render_template(dberror_template, **dberror_data)
+    email_utils.send_email(dberror_subject, dberror_body, user_data.get('Почта'),
+                           email_sender, email_username, email_password)

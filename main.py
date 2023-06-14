@@ -3,18 +3,15 @@
 Автор: Ряднов Иван
 Дата: 15.05.2023
 """
-import time
-
 from dotenv import load_dotenv
 import os
-import sys
 
 from helpers.data_validation import validate_user, validate_location, validate_hardware
-from helpers.db_api import fetch_requests, post_requests
+from helpers.db_api import post_requests
 from helpers.json_convertation import convert_data_to_json
 from emails.email_utils import get_mail
 from emails.email_convertation import convert_email_to_dict
-from emails.email_answers import location_error, approve_request, deny_request, alternative_request
+from emails.email_answers import location_error, approve_request, deny_request, alternative_request, db_error
 
 
 def get_data(email_username: str, email_password: str) -> list[str]:
@@ -68,8 +65,11 @@ def account_equipment(request_data: dict, email_sender: str, email_username: str
         res = validate_hardware(request_data)
         if isinstance(res, tuple):
             json_data = convert_data_to_json(user, request_data, res)
-            post_requests(json_data)
-            approve_request(request_data, email_sender, email_username, email_password)
+            request_res = post_requests(json_data)
+            if request_res:
+                approve_request(request_data, email_sender, email_username, email_password)
+            else:
+                db_error(request_data, email_sender, email_username, email_password)
             return
         if isinstance(res, str):
             alternative_request(request_data, email_sender, email_username, email_password, res)
