@@ -448,7 +448,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.ui.tableWidget.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
-        self.ui.tableWidget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.ui.tableWidget.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.ui.action_excel.triggered.connect(self.save_excel_file)
         self.ui.action_doc.triggered.connect(self.save_doc_file)
         self.ui.action_theme.triggered.connect(self.switch_theme)
