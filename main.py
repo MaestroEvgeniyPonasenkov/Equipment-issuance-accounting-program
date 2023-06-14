@@ -3,6 +3,8 @@
 Автор: Ряднов Иван
 Дата: 15.05.2023
 """
+import time
+
 from dotenv import load_dotenv
 import os
 import sys
@@ -34,8 +36,7 @@ def get_data(email_username: str, email_password: str) -> list[str]:
         messages = get_mail(email_username, email_password)
         return messages
     except ValueError:
-        print("На данный момент новых запросов нет")
-        sys.exit()
+        return []
 
 
 def account_equipment(request_data: dict, email_sender: str, email_username: str, email_password: str) -> None:
@@ -85,7 +86,10 @@ def start():
     email_password = os.getenv("EMAIL_PASSWORD")
 
     messages = get_data(email_username, email_password)
+    if not messages:
+        return "На данный момент новых запросов нет"
 
     for message in messages:
         message_parsed = convert_email_to_dict(message)
         account_equipment(message_parsed, email_sender, email_username, email_password)
+    return f"Было обработано {len(messages)} запросов"
